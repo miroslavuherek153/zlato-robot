@@ -13,8 +13,8 @@ SYMBOLY = {
     "GC=F": "🏆 ZLATO (v oz)",
     "NVDA": "🤖 NVIDIA (v ks)",
     "TSLA": "⚡ TESLA (v ks)",
-    "BTCE.DE": "₿ BITCOIN ETP (BTCE)",
-    "VETH.DE": "⟠ ETHEREUM ETP (VETH)"
+    "BITO": "₿ BITCOIN ETF (BITO)",
+    "ETHV": "⟠ ETHEREUM ETF (ETHV)"
 }
 
 def vypocitej_rsi(series, period=14):
