@@ -35,6 +35,13 @@ def analyzuj_a_posli(symbol, nazev):
     vwap = ( ((data['High'] + data['Low'] + data['Close']) / 3) * data['Volume'] ).sum() / data['Volume'].sum()
     rsi = vypocitej_rsi(data['Close']).iloc[-1]
 
+    # --- NOVINKA: LOGIKA EXTRÉMNÍHO RSI ---
+    rsi_alert = ""
+    if rsi >= 70:
+        rsi_alert = "⚠️ **POZOR: PŘEKOUPENO!** (Možná korekce dolů)"
+    elif rsi <= 30:
+        rsi_alert = "⚠️ **POZOR: PŘEPRODÁNO!** (Možný odraz nahoru)"
+
     # H1 Breakout
     h1 = data.resample('1h').agg({'High': 'max', 'Low': 'min'})
     h_high, h_low = float(h1['High'].iloc[-1]), float(h1['Low'].iloc[-1])
@@ -47,34 +54,28 @@ def analyzuj_a_posli(symbol, nazev):
     riziko_na_kus = abs(vstup - sl)
     pocet_kusu = int(RISK_NA_OBCHOD / riziko_na_kus) if riziko_na_kus > 0 else 0
     
-    # --- OPRAVA ODKAZŮ ZDE ---
-    tv_codes = {
-        "GC=F": "COMEX:GC1!", 
-        "NVDA": "NASDAQ:NVDA", 
-        "TSLA": "NASDAQ:TSLA",
-        "BITO": "NYSE:BITO", 
-        "ETHV": "AMEX:ETHV"
-    }
+    # TVŮRCE ODKAZU
+    tv_codes = {"GC=F": "COMEX:GC1!", "NVDA": "NASDAQ:NVDA", "TSLA": "NASDAQ:TSLA", "BITO": "NYSE:BITO", "ETHV": "AMEX:ETHV"}
     tv_symbol = tv_codes.get(symbol, symbol)
-    # Správný formát URL pro TradingView graf
     chart_url = f"https://tradingview.com{tv_symbol}"
 
+    # FORMÁTOVÁNÍ ZPRÁVY
     zprava = (
         f"**{nazev}**\n"
         f"Trend: **{smer}** | RSI: `{rsi:.0f}`\n"
+        f"{rsi_alert + ('' if not rsi_alert else b'').decode('utf-8')}\n" # Přidá alert jen když existuje
         f"💰 **OBJEM:** `{pocet_kusu} ks/oz` (risk {RISK_NA_OBCHOD}$)\n"
         f"--- 💡 PLÁN ---\n"
         f"🔹 **VSTUP:** `{vstup:.2f}` | 🛑 **STOP:** `{sl:.2f}`\n"
         f"🎯 **TARGET:** `{tp:.2f}` | 🛡️ **TRAILING:** `{riziko_na_kus:.2f}`\n"
-        f"📊 Graf: {chart_url}\n"
+        f"📊 Graf: <{chart_url}>\n"
         f"------------------------------"
     )
     
-    # Odeslání na Discord
     if DISCORD_WEBHOOK_URL:
         requests.post(DISCORD_WEBHOOK_URL, json={"content": zprava})
     else:
-        print(f"Webhook URL není nastaven! Výpis zprávy:\n{zprava}")
+        print(zprava)
 
 if __name__ == "__main__":
     for sym, jmeno in SYMBOLY.items():
