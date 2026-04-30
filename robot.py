@@ -35,12 +35,11 @@ def analyzuj_a_posli(symbol, nazev):
     vwap = ( ((data['High'] + data['Low'] + data['Close']) / 3) * data['Volume'] ).sum() / data['Volume'].sum()
     rsi = vypocitej_rsi(data['Close']).iloc[-1]
 
-    # H1 Breakout (poslední hodina)
+    # H1 Breakout
     h1 = data.resample('1h').agg({'High': 'max', 'Low': 'min'})
     h_high, h_low = float(h1['High'].iloc[-1]), float(h1['Low'].iloc[-1])
     smer = "LONG 🟢" if current_price > vwap else "SHORT 🔴"
     
-    # Buffer pro vstup
     buffer = 0.40 if symbol == "GC=F" else current_price * 0.001
     
     if current_price > vwap:
@@ -50,26 +49,21 @@ def analyzuj_a_posli(symbol, nazev):
     
     tp = vstup + (vstup - sl) * 1.5 if current_price > vwap else vstup - (sl - vstup) * 1.5
     
-    # Výpočty peněz a objemu
     riziko_na_kus = abs(vstup - sl)
     pocet_kusu = int(RISK_NA_OBCHOD / riziko_na_kus) if riziko_na_kus > 0 else 0
     
-    # Příprava odkazu pro TradingView (zjednodušený formát)
+    # TVŮRCE ODKAZU - TADY BYLA CHYBA (Chybělo lomítko za .com/)
     tv_codes = {
-        "GC=F": "COMEX:GC1!",
-        "NVDA": "NASDAQ:NVDA",
-        "TSLA": "NASDAQ:TSLA",
-        "BITO": "NYSE:BITO",
-        "ETHV": "AMEX:ETHV"
+        "GC=F": "COMEX:GC1!", "NVDA": "NASDAQ:NVDA", "TSLA": "NASDAQ:TSLA",
+        "BITO": "NYSE:BITO", "ETHV": "AMEX:ETHV"
     }
     tv_symbol = tv_codes.get(symbol, symbol)
-    chart_url = f"https://tradingview.com{tv_symbol}"
+    chart_url = f"https://tradingview.com{tv_symbol}/"
 
-    # SESTAVENÍ ZPRÁVY - Odkaz je na konci a bez závorek
     zprava = (
         f"**{nazev}**\n"
         f"Trend: **{smer}** | RSI: `{rsi:.0f}`\n"
-        f"💰 **OBJEM:** `{pocet_kusu} ks/oz` (při risku {RISK_NA_OBCHOD}$)\n"
+        f"💰 **OBJEM:** `{pocet_kusu} ks/oz` (risk {RISK_NA_OBCHOD}$)\n"
         f"--- 💡 PLÁN ---\n"
         f"🔹 **VSTUP:** `{vstup:.2f}` | 🛑 **STOP:** `{sl:.2f}`\n"
         f"🎯 **TARGET:** `{tp:.2f}` | 🛡️ **TRAILING:** `{riziko_na_kus:.2f}`\n"
@@ -81,7 +75,5 @@ def analyzuj_a_posli(symbol, nazev):
 
 if __name__ == "__main__":
     for sym, jmeno in SYMBOLY.items():
-        try:
-            analyzuj_a_posli(sym, jmeno)
-        except Exception as e:
-            print(f"Chyba u {sym}: {e}")
+        try: analyzuj_a_posli(sym, jmeno)
+        except Exception as e: print(f"Chyba u {sym}: {e}")
