@@ -40,7 +40,7 @@ def analyzuj_a_posli(symbol, nazev):
     h_high, h_low = float(h1['High'].iloc[-1]), float(h1['Low'].iloc[-1])
     smer = "LONG 🟢" if current_price > vwap else "SHORT 🔴"
     
-    # Buffer pro vstup (0.40 pro zlato, 0.1% pro akcie)
+    # Buffer pro vstup
     buffer = 0.40 if symbol == "GC=F" else current_price * 0.001
     
     if current_price > vwap:
@@ -54,18 +54,18 @@ def analyzuj_a_posli(symbol, nazev):
     riziko_na_kus = abs(vstup - sl)
     pocet_kusu = int(RISK_NA_OBCHOD / riziko_na_kus) if riziko_na_kus > 0 else 0
     
-    # Odkaz na graf (TradingView) - JEDNODUCHÝ FORMÁT PRO DISCORD
-    tv_map = {
+    # Příprava odkazu pro TradingView (zjednodušený formát)
+    tv_codes = {
         "GC=F": "COMEX:GC1!",
         "NVDA": "NASDAQ:NVDA",
         "TSLA": "NASDAQ:TSLA",
         "BITO": "NYSE:BITO",
         "ETHV": "AMEX:ETHV"
     }
-    tv_symbol = tv_map.get(symbol, symbol)
-    chart_url = f"https://tradingview.com{tv_symbol}/"
+    tv_symbol = tv_codes.get(symbol, symbol)
+    chart_url = f"https://tradingview.com{tv_symbol}"
 
-    # Sestavení zprávy pro Discord
+    # SESTAVENÍ ZPRÁVY - Odkaz je na konci a bez závorek
     zprava = (
         f"**{nazev}**\n"
         f"Trend: **{smer}** | RSI: `{rsi:.0f}`\n"
@@ -73,7 +73,7 @@ def analyzuj_a_posli(symbol, nazev):
         f"--- 💡 PLÁN ---\n"
         f"🔹 **VSTUP:** `{vstup:.2f}` | 🛑 **STOP:** `{sl:.2f}`\n"
         f"🎯 **TARGET:** `{tp:.2f}` | 🛡️ **TRAILING:** `{riziko_na_kus:.2f}`\n"
-        f"🔗 Graf: {chart_url}\n"
+        f"📊 Graf: {chart_url}\n"
         f"------------------------------"
     )
     
