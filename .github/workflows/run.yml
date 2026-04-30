@@ -1,11 +1,12 @@
 name: Zlato-Robot
+
 on:
-  on:
   schedule:
-    - cron: '05 07 * * *'  # Každý den v 09:05
-    - cron: '35 13 * * *'  # Každý den v 15:35
-    - cron: '05 18 * * *'  # Každý den v 20:05 (Přidali jsme večerní kontrolu)
-  workflow_dispatch: # Umožní spustit i ručně
+    - cron: '05 07 * * *'
+    - cron: '35 13 * * *'
+    - cron: '05 18 * * *'
+  workflow_dispatch:
+
 jobs:
   run:
     runs-on: ubuntu-latest
