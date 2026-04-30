@@ -2,10 +2,12 @@ name: Zlato-Robot
 
 on:
   schedule:
-    - cron: '05 07 * * *'
-    - cron: '35 13 * * *'
-    - cron: '05 18 * * *'
-  workflow_dispatch:
+    # Čas v UTC (14:35 UTC = 16:35 v Praze)
+    # Spouští se v 09:05, 15:35 a 20:05 (jen pondělí až pátek)
+    - cron: '05 07 * * 1-5'
+    - cron: '35 13 * * 1-5'
+    - cron: '05 18 * * 1-5'
+  workflow_dispatch: # Umožní ti to spustit i ručně tlačítkem
 
 jobs:
   run:
