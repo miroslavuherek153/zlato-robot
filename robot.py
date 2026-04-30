@@ -10,7 +10,7 @@ DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
 # Částka, kterou jsi ochoten riskovat na JEDEN OBCHOD (v USD)
 RISK_NA_OBCHOD = 50 
 
-# SEZNAM SYMBOLŮ PRO TVŮJ ROBOFOREX
+# SEZNAM SYMBOLŮ PŘESNĚ PRO TVŮJ ROBOFOREX
 SYMBOLY = {
     "GC=F": "🏆 ZLATO (v oz)",
     "NVDA": "🤖 NVIDIA (v ks)",
@@ -54,9 +54,16 @@ def analyzuj_a_posli(symbol, nazev):
     riziko_na_kus = abs(vstup - sl)
     pocet_kusu = int(RISK_NA_OBCHOD / riziko_na_kus) if riziko_na_kus > 0 else 0
     
-    # Odkaz na graf (TradingView) - OPRAVENÝ FORMÁT ADRESY
-    tv_symbol = symbol.replace("GC=F", "COMEX:GC1!").replace("ETHV", "AMEX:ETHV").replace("BITO", "NYSE:BITO").replace("NVDA", "NASDAQ:NVDA").replace("TSLA", "NASDAQ:TSLA")
-    chart_url = f"https://tradingview.com{tv_symbol}"
+    # Odkaz na graf (TradingView) - JEDNODUCHÝ FORMÁT PRO DISCORD
+    tv_map = {
+        "GC=F": "COMEX:GC1!",
+        "NVDA": "NASDAQ:NVDA",
+        "TSLA": "NASDAQ:TSLA",
+        "BITO": "NYSE:BITO",
+        "ETHV": "AMEX:ETHV"
+    }
+    tv_symbol = tv_map.get(symbol, symbol)
+    chart_url = f"https://tradingview.com{tv_symbol}/"
 
     # Sestavení zprávy pro Discord
     zprava = (
@@ -66,7 +73,7 @@ def analyzuj_a_posli(symbol, nazev):
         f"--- 💡 PLÁN ---\n"
         f"🔹 **VSTUP:** `{vstup:.2f}` | 🛑 **STOP:** `{sl:.2f}`\n"
         f"🎯 **TARGET:** `{tp:.2f}` | 🛡️ **TRAILING:** `{riziko_na_kus:.2f}`\n"
-        f"🔗 [OTEVŘÍT GRAF]({chart_url})\n"
+        f"🔗 Graf: {chart_url}\n"
         f"------------------------------"
     )
     
