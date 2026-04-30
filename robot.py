@@ -12,7 +12,7 @@ SYMBOLY = {
     "NVDA": "🤖 NVIDIA (v ks)",
     "TSLA": "⚡ TESLA (v ks)",
     "BTCE.DE": "₿ BITCOIN ETP (BTCE)",
-    "ETHW.DE": "⟠ ETHEREUM ETP (ETHW)"
+    "VETH.DE": "⟠ ETHEREUM ETP (VETH)"  # Změněno na stabilnější VETH
 }
 
 def vypocitej_rsi(series, period=14):
