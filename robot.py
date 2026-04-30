@@ -10,7 +10,7 @@ DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
 # Částka, kterou jsi ochoten riskovat na JEDEN OBCHOD (v USD)
 RISK_NA_OBCHOD = 50 
 
-# SEZNAM SYMBOLŮ PŘESNĚ PRO TVŮJ ROBOFOREX
+# SEZNAM SYMBOLŮ
 SYMBOLY = {
     "GC=F": "🏆 ZLATO (v oz)",
     "NVDA": "🤖 NVIDIA (v ks)",
@@ -47,7 +47,7 @@ def analyzuj_a_posli(symbol, nazev):
     riziko_na_kus = abs(vstup - sl)
     pocet_kusu = int(RISK_NA_OBCHOD / riziko_na_kus) if riziko_na_kus > 0 else 0
     
-    # TVŮRCE ODKAZU - OPRAVENO PRO PŘÍMÝ GRAF
+    # --- OPRAVA ODKAZŮ ZDE ---
     tv_codes = {
         "GC=F": "COMEX:GC1!", 
         "NVDA": "NASDAQ:NVDA", 
@@ -56,7 +56,7 @@ def analyzuj_a_posli(symbol, nazev):
         "ETHV": "AMEX:ETHV"
     }
     tv_symbol = tv_codes.get(symbol, symbol)
-    # Formát odkazu, který TradingView zaručeně otevře
+    # Správný formát URL pro TradingView graf
     chart_url = f"https://tradingview.com{tv_symbol}"
 
     zprava = (
@@ -70,7 +70,11 @@ def analyzuj_a_posli(symbol, nazev):
         f"------------------------------"
     )
     
-    requests.post(DISCORD_WEBHOOK_URL, json={"content": zprava})
+    # Odeslání na Discord
+    if DISCORD_WEBHOOK_URL:
+        requests.post(DISCORD_WEBHOOK_URL, json={"content": zprava})
+    else:
+        print(f"Webhook URL není nastaven! Výpis zprávy:\n{zprava}")
 
 if __name__ == "__main__":
     for sym, jmeno in SYMBOLY.items():
