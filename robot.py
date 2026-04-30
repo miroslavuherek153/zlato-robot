@@ -7,7 +7,7 @@ from datetime import datetime
 # Načtení tajné adresy pro Discord
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
 
-# Nastavení rizika
+# Částka, kterou jsi ochoten riskovat na JEDEN OBCHOD (v USD)
 RISK_NA_OBCHOD = 50 
 
 SYMBOLY = {
@@ -36,8 +36,8 @@ def analyzuj_a_posli(symbol, nazev):
 
     # RSI Alert logika
     rsi_alert = ""
-    if rsi >= 70: rsi_alert = "\n⚠️ **PŘEKOUPENO!**"
-    elif rsi <= 30: rsi_alert = "\n⚠️ **PŘEPRODÁNO!**"
+    if rsi >= 70: rsi_alert = "\n⚠️ **POZOR: PŘEKOUPENO!**"
+    elif rsi <= 30: rsi_alert = "\n⚠️ **POZOR: PŘEPRODÁNO!**"
 
     # Strategie
     h1 = data.resample('1h').agg({'High': 'max', 'Low': 'min'})
@@ -51,17 +51,10 @@ def analyzuj_a_posli(symbol, nazev):
     riziko_na_kus = abs(vstup - sl)
     pocet_kusu = int(RISK_NA_OBCHOD / riziko_na_kus) if riziko_na_kus > 0 else 0
     
-    # --- TADY JE TA OPRAVA PRO DISCORD ---
-    tv_codes = {
-        "GC=F": "COMEX:GC1!", 
-        "NVDA": "NASDAQ:NVDA", 
-        "TSLA": "NASDAQ:TSLA",
-        "BITO": "NYSE:BITO", 
-        "ETHV": "AMEX:ETHV"
-    }
-    tv_symbol = tv_codes.get(symbol, symbol)
-    # Přidáno www. a správná struktura parametrů, aby to Discord vzal jako odkaz
-    chart_url = f"https://tradingview.com{tv_symbol}"
+    # --- NOVÝ FORMÁT ODKAZU ---
+    # Odstraníme '=F' u zlata, aby odkaz fungoval čistě
+    clean_symbol = symbol.replace("=F", "")
+    chart_url = f"https://tradingview.com{clean_symbol}/"
 
     zprava = (
         f"**{nazev}**\n"
