@@ -1,0 +1,18 @@
+name: Zlato-Robot
+on:
+  schedule:
+    - cron: '05 07 * * 1-5'  # 09:05 ráno
+    - cron: '35 13 * * 1-5'  # 15:35 odpoledne
+  workflow_dispatch: # Umožní spustit i ručně
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - run: pip install -r requirements.txt
+      - env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: python robot.py
