@@ -4,9 +4,13 @@ import requests
 import os
 from datetime import datetime
 
+# Načtení tajné adresy pro Discord
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
+
+# Částka, kterou jsi ochoten riskovat na JEDEN OBCHOD (v USD)
 RISK_NA_OBCHOD = 50 
 
+# SEZNAM SYMBOLŮ PŘESNĚ PRO TVŮJ ROBOFOREX
 SYMBOLY = {
     "GC=F": "🏆 ZLATO (v oz)",
     "NVDA": "🤖 NVIDIA (v ks)",
@@ -23,6 +27,7 @@ def vypocitej_rsi(series, period=14):
     return 100 - (100 / (1 + rs))
 
 def analyzuj_a_posli(symbol, nazev):
+    # Stažení dat
     data = yf.download(symbol, period="2d", interval="5m", auto_adjust=True, multi_level_index=False)
     if data.empty: return
 
@@ -30,6 +35,7 @@ def analyzuj_a_posli(symbol, nazev):
     vwap = ( ((data['High'] + data['Low'] + data['Close']) / 3) * data['Volume'] ).sum() / data['Volume'].sum()
     rsi = vypocitej_rsi(data['Close']).iloc[-1]
 
+    # H1 Breakout
     h1 = data.resample('1h').agg({'High': 'max', 'Low': 'min'})
     h_high, h_low = float(h1['High'].iloc[-1]), float(h1['Low'].iloc[-1])
     smer = "LONG 🟢" if current_price > vwap else "SHORT 🔴"
@@ -41,13 +47,17 @@ def analyzuj_a_posli(symbol, nazev):
     riziko_na_kus = abs(vstup - sl)
     pocet_kusu = int(RISK_NA_OBCHOD / riziko_na_kus) if riziko_na_kus > 0 else 0
     
+    # TVŮRCE ODKAZU - OPRAVENO PRO PŘÍMÝ GRAF
     tv_codes = {
-        "GC=F": "COMEX-GC1!", "NVDA": "NASDAQ-NVDA", "TSLA": "NASDAQ-TSLA",
-        "BITO": "NYSE-BITO", "ETHV": "AMEX-ETHV"
+        "GC=F": "COMEX:GC1!", 
+        "NVDA": "NASDAQ:NVDA", 
+        "TSLA": "NASDAQ:TSLA",
+        "BITO": "NYSE:BITO", 
+        "ETHV": "AMEX:ETHV"
     }
     tv_symbol = tv_codes.get(symbol, symbol)
-    # TADY JE TA OPRAVA - KOMPLETNÍ ADRESA S WWW A LOMÍTKY
-    chart_url = f"https://tradingview.com{tv_symbol}/"
+    # Formát odkazu, který TradingView zaručeně otevře
+    chart_url = f"https://tradingview.com{tv_symbol}"
 
     zprava = (
         f"**{nazev}**\n"
@@ -59,9 +69,12 @@ def analyzuj_a_posli(symbol, nazev):
         f"📊 Graf: {chart_url}\n"
         f"------------------------------"
     )
+    
     requests.post(DISCORD_WEBHOOK_URL, json={"content": zprava})
 
 if __name__ == "__main__":
     for sym, jmeno in SYMBOLY.items():
-        try: analyzuj_a_posli(sym, jmeno)
-        except Exception as e: print(f"Chyba: {e}")
+        try:
+            analyzuj_a_posli(sym, jmeno)
+        except Exception as e:
+            print(f"Chyba u {sym}: {e}")
