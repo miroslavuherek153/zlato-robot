@@ -1,8 +1,10 @@
 name: Zlato-Robot
 on:
+  on:
   schedule:
-    - cron: '05 07 * * 1-5'  # 09:05 ráno
-    - cron: '35 13 * * 1-5'  # 15:35 odpoledne
+    - cron: '05 07 * * *'  # Každý den v 09:05
+    - cron: '35 13 * * *'  # Každý den v 15:35
+    - cron: '05 18 * * *'  # Každý den v 20:05 (Přidali jsme večerní kontrolu)
   workflow_dispatch: # Umožní spustit i ručně
 jobs:
   run:
