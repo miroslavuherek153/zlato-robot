@@ -4,15 +4,21 @@ import requests
 import os
 from datetime import datetime
 
-# Načtení adresy z trezoru
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK")
 
-def analyzuj_zlato():
-    # Přidali jsme auto_adjust a multi_level_index=False - to vyřeší tvou chybu z obrázku
-    data = yf.download("GC=F", period="1d", interval="1m", auto_adjust=True, multi_level_index=False)
+# SEZNAM AKTIV K SLEDOVÁNÍ (Můžeš si sem přidat další)
+SYMBOLY = {
+    "GC=F": "🏆 ZLATO (XAUUSD)",
+    "NVDA": "🤖 NVIDIA",
+    "TSLA": "⚡ TESLA",
+    "AAPL": "🍎 APPLE"
+}
+
+def analyzuj_a_posli(symbol, nazev):
+    # Stažení dat
+    data = yf.download(symbol, period="1d", interval="1m", auto_adjust=True, multi_level_index=False)
     
     if data.empty: 
-        print("Nepodařilo se stáhnout data.")
         return
 
     # Výpočet VWAP
@@ -25,29 +31,39 @@ def analyzuj_zlato():
     h_high = float(h1_data['High'].iloc[-1])
     h_low = float(h1_data['Low'].iloc[-1])
 
-    # Logika strategie
-    smer = "LONG 🟢" if current_price > vwap else "SHORT 🔴"
-    vstup = h_high + 0.30 if current_price > vwap else h_low - 0.30
-    sl = h_low if current_price > vwap else h_high
-    # RRR 1:1.5
+    # Logika strategie a výpočet síly trendu
+    vzdalenost_od_vwap = abs(((current_price - vwap) / vwap) * 100)
+    sila_trendu = "🔥 Silný" if vzdalenost_od_vwap > 0.5 else "💨 Slabý"
+
+    if current_price > vwap:
+        smer = "LONG 🟢"
+        vstup = h_high * 1.001 if symbol != "GC=F" else h_high + 0.30
+        sl = h_low
+    else:
+        smer = "SHORT 🔴"
+        vstup = h_low * 0.999 if symbol != "GC=F" else h_low - 0.30
+        sl = h_high
+    
     tp = vstup + (vstup - sl) * 1.5 if current_price > vwap else vstup - (sl - vstup) * 1.5
 
+    # Formátování zprávy pro Discord
     zprava = (
-        f"**📊 ZLATO (XAUUSD)**\n"
-        f"Směr: {smer}\n"
-        f"Aktuálně: {current_price:.2f}\n"
-        f"VWAP: {vwap:.2f}\n"
-        f"-------------------\n"
+        f"**{nazev}**\n"
+        f"Směr: {smer} | Trend: {sila_trendu}\n"
+        f"Aktuálně: {current_price:.2f} (VWAP: {vwap:.2f})\n"
+        f"--- VSTUPNÍ PLÁN ---\n"
         f"🔹 **VSTUP:** {vstup:.2f}\n"
         f"🛑 **STOP LOSS:** {sl:.2f}\n"
         f"🎯 **TAKE PROFIT:** {tp:.2f}\n"
-        f"-------------------\n"
-        f"⏰ Čas signálu: {datetime.now().strftime('%H:%M')}"
+        f"------------------------------"
     )
     
-    # Odeslání na Discord
     requests.post(DISCORD_WEBHOOK_URL, json={"content": zprava})
-    print("Signál odeslán na Discord!")
 
 if __name__ == "__main__":
-    analyzuj_zlato()
+    # Robot projde všechny symboly v seznamu
+    for sym, jmeno in SYMBOLY.items():
+        try:
+            analyzuj_a_posli(sym, jmeno)
+        except Exception as e:
+            print(f"Chyba u {sym}: {e}")
