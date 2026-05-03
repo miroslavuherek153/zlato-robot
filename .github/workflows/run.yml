@@ -2,7 +2,6 @@ name: Zlato-Robot
 
 on:
   schedule:
-    # 09:05, 15:35, 20:05 (UTC časy)
     - cron: '05 07 * * 1-5'
     - cron: '35 13 * * 1-5'
     - cron: '05 18 * * 1-5'
@@ -38,7 +37,7 @@ jobs:
 
       - name: Upload logs
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: robot-logs
           path: logs/
