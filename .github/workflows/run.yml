@@ -11,7 +11,7 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
-    timeout-minutes: 10   # ochrana proti zaseknutí
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repo
@@ -28,20 +28,17 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run robot
-        env:
-          GOLDAPI_KEY: ${{ secrets.GOLDAPI_KEY }}
-          TWELVEDATA_KEY: ${{ secrets.TWELVEDATA_KEY }}
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
-          MAILGUN_DOMAIN: ${{ secrets.MAILGUN_DOMAIN }}
-          MAIL_TO: ${{ secrets.MAIL_TO }}
-        run: python robot.py
+      - name: Install TextBlob corpora
+        run: python -m textblob.download_corpora
 
-            - name: Upload logs
+      - name: Run trading robot
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: python src/robot.py
+
+      - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: robot-logs
           path: logs/
-
