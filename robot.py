@@ -1,5 +1,4 @@
 import os
-from sentiment import sentiment_score
 from datetime import datetime
 
 from config_loader import load_config
@@ -9,6 +8,8 @@ from strategy import determine_direction
 from risk import calculate_position_size
 from notifier import send_discord
 from logger import log_info, log_error
+from sentiment import sentiment_score
+from prediction import trend_direction
 
 # ============================
 # 🔧 Načtení konfigurace
@@ -63,6 +64,26 @@ def analyzuj(symbol, nazev):
     h_high = float(h1["High"].iloc[-2])
     h_low = float(h1["Low"].iloc[-2])
 
+    # --- Sentiment ---
+    sentiment = sentiment_score(symbol)
+    log_info(f"Sentiment {symbol}: {sentiment:.0f}")
+
+    if sentiment < 40:
+        log_info(f"Sentiment příliš negativní ({sentiment:.0f}), obchod přeskočen.")
+        return
+
+    # --- Trend Prediction (FÁZE 5) ---
+    pred_dir, pred_score = trend_direction(close)
+    log_info(f"Predikce {symbol}: {pred_dir} ({pred_score})")
+
+    # Filtr predikce
+    if pred_dir == "DOWN" and current_price > vwap:
+        log_info("Predikce proti trendu → obchod přeskočen.")
+        return
+    if pred_dir == "UP" and current_price < vwap:
+        log_info("Predikce proti trendu → obchod přeskočen.")
+        return
+
     # --- Trend ---
     is_long = determine_direction(current_price, vwap)
     smer = "LONG 🟢" if is_long else "SHORT 🔴"
@@ -89,6 +110,8 @@ def analyzuj(symbol, nazev):
             "fields": [
                 {"name": "RSI", "value": f"`{rsi_val:.0f}`"},
                 {"name": "VWAP", "value": f"`{vwap:.2f}`"},
+                {"name": "Sentiment", "value": f"`{sentiment:.0f}` / 100"},
+                {"name": "Predikce", "value": f"`{pred_dir}` ({pred_score})"},
                 {"name": "Objem", "value": f"`{pocet} ks`"},
                 {"name": "Obchodní plán", "value": f"VSTUP `{vstup:.2f}`\nSTOP `{sl:.2f}`\nTARGET `{tp:.2f}`"},
                 {"name": "Graf", "value": f"[Otevřít graf]({chart_url})"}
