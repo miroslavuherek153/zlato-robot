@@ -1,4 +1,5 @@
 import os
+from sentiment import sentiment_score
 from datetime import datetime
 
 from config_loader import load_config
