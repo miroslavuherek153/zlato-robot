@@ -38,9 +38,10 @@ jobs:
           MAIL_TO: ${{ secrets.MAIL_TO }}
         run: python robot.py
 
-      - name: Upload logs
+            - name: Upload logs
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: robot-logs
           path: logs/
+
