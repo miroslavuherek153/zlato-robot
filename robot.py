@@ -73,7 +73,7 @@ def analyzuj(symbol, nazev):
         log_info(f"Sentiment příliš negativní ({sentiment:.0f}), obchod přeskočen.")
         return
 
-    # --- Trend Prediction (FÁZE 5) ---
+    # --- Trend Prediction ---
     pred_dir, pred_score = trend_direction(close)
     log_info(f"Predikce {symbol}: {pred_dir} ({pred_score})")
 
