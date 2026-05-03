@@ -14,7 +14,7 @@
         "stop_loss": 4632.325055803572,
         "take_profit": 4654.150181361607,
         "volume": 6,
-        "timestamp": "2026-05-03T18:03:46.790359",
+        "timestamp": "2026-05-03T18:37:07.970231",
         "timeframes": {
             "5m": {
                 "price": 4644.5,
@@ -47,6 +47,15 @@
                 "prediction_score": 90,
                 "trend": "SHORT \ud83d\udd34"
             },
+            "4h": {
+                "price": 4644.5,
+                "vwap": 4823.136234140052,
+                "rsi": 53.94757566708329,
+                "atr": 39.09999302455357,
+                "prediction": "FLAT",
+                "prediction_score": 50,
+                "trend": "SHORT \ud83d\udd34"
+            },
             "1d": {
                 "price": 4644.5,
                 "vwap": 4109.780749151888,
@@ -58,7 +67,7 @@
             }
         }
     },
-    "updated": "2026-05-03T18:03:50.009003",
+    "updated": "2026-05-03T18:37:10.615286",
     "NVDA": {
         "symbol": "NVDA",
         "nazev": "\ud83e\udd16 NVIDIA (v ks)",
@@ -74,7 +83,7 @@
         "stop_loss": 198.90281786237443,
         "take_profit": 196.8543679373605,
         "volume": 73,
-        "timestamp": "2026-05-03T18:03:47.580707",
+        "timestamp": "2026-05-03T18:37:08.670580",
         "timeframes": {
             "5m": {
                 "price": 198.4199981689453,
@@ -107,10 +116,19 @@
                 "prediction_score": 10,
                 "trend": "LONG \ud83d\udfe2"
             },
+            "4h": {
+                "price": 198.4199981689453,
+                "vwap": 186.51815007060625,
+                "rsi": 81.5066442588271,
+                "atr": NaN,
+                "prediction": "DOWN",
+                "prediction_score": 10,
+                "trend": "LONG \ud83d\udfe2"
+            },
             "1d": {
                 "price": 198.4499969482422,
-                "vwap": 174.238918839589,
-                "rsi": 52.98323573272719,
+                "vwap": 174.2389184135349,
+                "rsi": 52.98323573272755,
                 "atr": 6.405713762555804,
                 "prediction": "FLAT",
                 "prediction_score": 50,
@@ -133,7 +151,7 @@
         "stop_loss": 10.753053188323975,
         "take_profit": 10.833892822265625,
         "volume": 1855,
-        "timestamp": "2026-05-03T18:03:49.040842",
+        "timestamp": "2026-05-03T18:37:09.832548",
         "timeframes": {
             "5m": {
                 "price": 10.734999656677246,
@@ -166,10 +184,19 @@
                 "prediction_score": 50,
                 "trend": "LONG \ud83d\udfe2"
             },
+            "4h": {
+                "price": 10.734999656677246,
+                "vwap": 9.770657698679116,
+                "rsi": 56.469721885859364,
+                "atr": NaN,
+                "prediction": "FLAT",
+                "prediction_score": 50,
+                "trend": "LONG \ud83d\udfe2"
+            },
             "1d": {
                 "price": 10.739999771118164,
-                "vwap": 11.34391656807803,
-                "rsi": 61.48237780395759,
+                "vwap": 11.343916548028906,
+                "rsi": 61.4823776821766,
                 "atr": 0.3078549903668642,
                 "prediction": "UP",
                 "prediction_score": 90,
@@ -192,7 +219,7 @@
         "stop_loss": 33.73857157570975,
         "take_profit": 33.892859595162534,
         "volume": 972,
-        "timestamp": "2026-05-03T18:03:50.008796",
+        "timestamp": "2026-05-03T18:37:10.615076",
         "timeframes": {
             "5m": {
                 "price": 33.720001220703125,
@@ -221,6 +248,15 @@
                 "vwap": 30.480637587250154,
                 "rsi": 57.898494072375954,
                 "atr": 0.21700831821986608,
+                "prediction": "FLAT",
+                "prediction_score": 50,
+                "trend": "LONG \ud83d\udfe2"
+            },
+            "4h": {
+                "price": 33.720001220703125,
+                "vwap": 30.495749907573693,
+                "rsi": 52.60186482695283,
+                "atr": NaN,
                 "prediction": "FLAT",
                 "prediction_score": 50,
                 "trend": "LONG \ud83d\udfe2"
