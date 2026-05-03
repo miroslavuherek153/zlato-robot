@@ -10,6 +10,7 @@ from notifier import send_discord
 from logger import log_info, log_error
 from sentiment import sentiment_score
 from prediction import trend_direction
+from exporter import save_json
 
 # ============================
 # 🔧 Načtení konfigurace
@@ -101,7 +102,7 @@ def analyzuj(symbol, nazev):
     clean_symbol = symbol.replace("=F", "")
     chart_url = f"https://www.tradingview.com/symbols/{clean_symbol}"
 
-       # --- Discord embed ---
+    # --- Discord embed (vylepšený) ---
     emoji = "🚀" if pred_dir == "UP" else "📉" if pred_dir == "DOWN" else "⚪"
     sentiment_emoji = "🟢" if sentiment > 60 else "🟡" if sentiment >= 40 else "🔴"
 
@@ -134,10 +135,29 @@ def analyzuj(symbol, nazev):
         }]
     }
 
-
-    # --- Odeslání na Discord ---
     if DISCORD_WEBHOOK:
         send_discord(DISCORD_WEBHOOK, payload)
+
+    # --- JSON export ---
+    json_data = {
+        "symbol": symbol,
+        "nazev": nazev,
+        "price": current_price,
+        "vwap": vwap,
+        "rsi": float(rsi_val),
+        "atr": float(atr_val),
+        "sentiment": float(sentiment),
+        "prediction": pred_dir,
+        "prediction_score": pred_score,
+        "trend": smer,
+        "entry": vstup,
+        "stop_loss": sl,
+        "take_profit": tp,
+        "volume": pocet,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+    save_json(symbol, json_data)
 
     log_info(f"Hotovo: {symbol}")
 
