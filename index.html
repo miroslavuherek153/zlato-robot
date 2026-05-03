@@ -6,484 +6,140 @@
     <title>Trading Dashboard</title>
 
     <style>
-        :root {
-            --bg: #050608;
-            --card-bg: #0d1117;
-            --card-border: #1f2933;
-            --accent: #f1c40f;
-            --accent-soft: #f39c12;
-            --text-main: #f5f5f5;
-            --text-muted: #9ca3af;
-            --bull: #22c55e;
-            --bear: #ef4444;
-            --flat: #eab308;
-        }
-
-        * { box-sizing: border-box; }
-
         body {
-            background: radial-gradient(circle at top, #111827 0, #020617 55%);
-            color: var(--text-main);
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background-color: #0d1117;
+            color: #e6edf3;
+            font-family: Arial, sans-serif;
             margin: 0;
-            padding: 0;
-        }
-
-        header {
-            text-align: center;
-            padding: 24px 12px 8px;
+            padding: 20px;
         }
 
         h1 {
-            margin: 0;
-            font-size: 32px;
-            color: var(--accent);
-            letter-spacing: 0.04em;
+            color: #f1c40f;
+            text-align: center;
         }
 
-        .subtitle {
-            margin-top: 6px;
-            font-size: 14px;
-            color: var(--text-muted);
+        .symbol-block {
+            background: #161b22;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 10px;
+            border: 1px solid #30363d;
         }
 
-        #status {
-            margin-top: 8px;
-            font-size: 13px;
-        }
-
-        .status-ok { color: #4ade80; }
-        .status-error { color: #f97373; }
-
-        .container {
-            max-width: 1100px;
-            margin: 0 auto 40px;
-            padding: 0 12px 24px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 18px;
-        }
-
-        .card {
-            background: linear-gradient(145deg, #020617, #020617 40%, #0b1120);
-            border-radius: 14px;
-            border: 1px solid var(--card-border);
-            padding: 16px 16px 14px;
-            box-shadow: 0 18px 35px rgba(0,0,0,0.45);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: "";
-            position: absolute;
-            inset: 0;
-            opacity: 0.12;
-            background: radial-gradient(circle at top left, rgba(241,196,15,0.35), transparent 55%);
-            pointer-events: none;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
+        .tf-buttons button {
+            margin-right: 8px;
             margin-bottom: 8px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .symbol {
-            font-size: 18px;
-            font-weight: 600;
-            color: var(--accent-soft);
-        }
-
-        .ticker {
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .price {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .price-label {
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-
-        .pill-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin: 6px 0 10px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .pill {
-            font-size: 11px;
-            padding: 3px 8px;
-            border-radius: 999px;
-            border: 1px solid rgba(148,163,184,0.5);
-            color: var(--text-muted);
-            background: rgba(15,23,42,0.8);
-        }
-
-        .pill-strong {
-            border-color: rgba(250,204,21,0.8);
-            color: var(--accent);
-            background: rgba(24,24,27,0.9);
-        }
-
-        .pill-bull {
-            border-color: rgba(34,197,94,0.8);
-            color: var(--bull);
-        }
-
-        .pill-bear {
-            border-color: rgba(239,68,68,0.8);
-            color: var(--bear);
-        }
-
-        .row {
-            display: flex;
-            justify-content: space-between;
-            font-size: 13px;
-            margin: 3px 0;
-            position: relative;
-            z-index: 1;
-        }
-
-        .row-label { color: var(--text-muted); }
-        .row-value { font-weight: 500; }
-
-        .plan {
-            margin-top: 8px;
-            padding-top: 6px;
-            border-top: 1px dashed rgba(55,65,81,0.8);
-            position: relative;
-            z-index: 1;
-        }
-
-        .plan-title {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-        }
-
-        .plan-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 2px 10px;
-            font-size: 12px;
-        }
-
-        .plan-label { color: var(--text-muted); }
-        .plan-value { font-weight: 500; }
-
-        .footer-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 10px;
-            font-size: 11px;
-            color: var(--text-muted);
-            position: relative;
-            z-index: 1;
-        }
-
-        .link {
-            color: #38bdf8;
-            text-decoration: none;
-            font-size: 11px;
-        }
-
-        .link:hover { text-decoration: underline; }
-
-        .tf-switch {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin: 4px 0 6px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .tf-btn {
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 999px;
-            border: 1px solid rgba(148,163,184,0.6);
-            background: rgba(15,23,42,0.9);
-            color: var(--text-muted);
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
             cursor: pointer;
+            background: #21262d;
+            color: #e6edf3;
         }
 
-        .tf-btn.active {
-            border-color: rgba(250,204,21,0.9);
-            color: var(--accent);
-            background: rgba(24,24,27,0.95);
+        .tf-buttons button.active {
+            background: #f1c40f;
+            color: #000;
+            font-weight: bold;
         }
 
-        .tf-heatmap {
-            display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
-            margin-top: 4px;
-            font-size: 9px;
+        .tf-data {
+            margin-top: 15px;
+            padding: 15px;
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 8px;
         }
 
-        .tf-dot {
-            padding: 2px 6px;
-            border-radius: 999px;
-            border: 1px solid rgba(148,163,184,0.4);
-            background: rgba(15,23,42,0.9);
-            color: var(--text-muted);
-        }
-
-        .tf-dot.bull { border-color: rgba(34,197,94,0.8); color: var(--bull); }
-        .tf-dot.bear { border-color: rgba(239,68,68,0.8); color: var(--bear); }
-        .tf-dot.flat { border-color: rgba(234,179,8,0.8); color: var(--flat); }
-
-        @media (max-width: 600px) {
-            header { padding-top: 18px; }
-            h1 { font-size: 24px; }
+        .error {
+            color: #ff6b6b;
+            text-align: center;
+            font-size: 20px;
+            margin-top: 40px;
         }
     </style>
 </head>
+
 <body>
 
-<header>
-    <h1>📊 Trading Dashboard</h1>
-    <div class="subtitle">Multi-timeframe analýza, trend, sentiment a obchodní plán (5m)</div>
-    <div id="status">Načítám data…</div>
-</header>
+<h1>📊 Trading Dashboard</h1>
+<p style="text-align:center; opacity:0.8;">Multi-timeframe analýza, trend, sentiment a obchodní plán (5m)</p>
 
-<div class="container" id="cards"></div>
+<div id="content"></div>
 
 <script>
-    const url = "https://miroslavuherek153.github.io/zlato-robot/data.json";
+const AVAILABLE_TF = ["5m", "30m", "1h", "4h", "1d"];
 
-    const AVAILABLE_TF = ["5m", "30m", "1h", "4h", "1d"];  // ← 4h JE TADY
+async function loadData() {
+    try {
+        const response = await fetch("data.json?cache=" + Date.now());
+        if (!response.ok) throw new Error("Chyba načítání data.json");
 
-    function classifyTrend(trendText) {
-        if (!trendText) return "flat";
-        const t = trendText.toUpperCase();
-        if (t.includes("LONG")) return "bull";
-        if (t.includes("SHORT")) return "bear";
-        return "flat";
+        const data = await response.json();
+        renderDashboard(data);
+    } catch (err) {
+        document.getElementById("content").innerHTML =
+            `<p class="error">❌ Chyba načítání data.json</p>`;
     }
+}
 
-    function trendEmoji(trendText) {
-        const t = classifyTrend(trendText);
-        if (t === "bull") return "🟢";
-        if (t === "bear") return "🔴";
-        return "🟡";
-    }
+function renderDashboard(data) {
+    const container = document.getElementById("content");
+    container.innerHTML = "";
 
-    function predictionEmoji(pred) {
-        if (!pred) return "⚪";
-        const p = pred.toUpperCase();
-        if (p === "UP") return "🚀";
-        if (p === "DOWN") return "📉";
-        return "⚪";
-    }
+    Object.keys(data).forEach(symbol => {
+        if (symbol === "updated") return;
 
-    function createTfButtons(tfContainer, symbolKey, data, initialTf, onChange) {
+        const item = data[symbol];
+        const tfBlocks = item.timeframes;
+
+        let html = `
+            <div class="symbol-block">
+                <h2>${item.nazev} — ${symbol}</h2>
+                <p><strong>Cena:</strong> ${item.price}</p>
+                <p><strong>Sentiment:</strong> ${item.sentiment}</p>
+                <p><strong>Predikce:</strong> ${item.prediction} (${item.prediction_score})</p>
+
+                <div class="tf-buttons">
+        `;
+
         AVAILABLE_TF.forEach(tf => {
-            if (!data.timeframes || !data.timeframes[tf]) return;
-            const btn = document.createElement("button");
-            btn.className = "tf-btn" + (tf === initialTf ? " active" : "");
-            btn.textContent = tf;
-            btn.dataset.tf = tf;
-            btn.addEventListener("click", () => {
-                const all = tfContainer.querySelectorAll(".tf-btn");
-                all.forEach(b => b.classList.remove("active"));
-                btn.classList.add("active");
-                onChange(tf);
-            });
-            tfContainer.appendChild(btn);
+            html += `<button onclick="showTF('${symbol}', '${tf}')">${tf}</button>`;
         });
+
+        html += `</div>`;
+
+        html += `<div id="tf-${symbol}" class="tf-data">Klikni na timeframe…</div>`;
+        html += `</div>`;
+
+        container.innerHTML += html;
+    });
+}
+
+function showTF(symbol, tf) {
+    const block = document.getElementById(`tf-${symbol}`);
+    const data = window.dashboardData[symbol].timeframes[tf];
+
+    if (!data) {
+        block.innerHTML = `<p>❌ Data nejsou dostupná</p>`;
+        return;
     }
 
-    function buildHeatmap(tfHeatmap, timeframes) {
-        tfHeatmap.innerHTML = "";
-        Object.keys(timeframes).forEach(tf => {
-            const block = timeframes[tf];
-            if (!block) return;
-            const dot = document.createElement("div");
-            const cls = classifyTrend(block.trend);
-            dot.className = "tf-dot " + cls;
-            dot.textContent = tf.toUpperCase();
-            tfHeatmap.appendChild(dot);
-        });
-    }
+    block.innerHTML = `
+        <p><strong>VWAP:</strong> ${data.vwap.toFixed(2)}</p>
+        <p><strong>RSI:</strong> ${data.rsi.toFixed(2)}</p>
+        <p><strong>ATR:</strong> ${data.atr}</p>
+        <p><strong>Trend:</strong> ${data.trend}</p>
+        <p><strong>Predikce:</strong> ${data.prediction} (${data.prediction_score})</p>
+    `;
+}
 
-    async function loadData() {
-        try {
-            const response = await fetch(url + "?t=" + Date.now());
-            if (!response.ok) {
-                document.getElementById("status").innerText = "Chyba načítání data.json";
-                document.getElementById("status").className = "status-error";
-                return;
-            }
-
-            const data = await response.json();
-            document.getElementById("status").innerText = "Data načtena ✓";
-            document.getElementById("status").className = "status-ok";
-
-            const container = document.getElementById("cards");
-            container.innerHTML = "";
-
-            Object.keys(data).forEach(symbol => {
-                if (symbol === "updated") return;
-
-                const d = data[symbol];
-                const mainTf = "5m";
-                const tfData = d.timeframes || {};
-                const activeTf = tfData[mainTf] ? mainTf : Object.keys(tfData)[0] || null;
-
-                const card = document.createElement("div");
-                card.className = "card";
-
-                const header = document.createElement("div");
-                header.className = "card-header";
-
-                const left = document.createElement("div");
-                left.innerHTML = `
-                    <div class="symbol">${d.nazev}</div>
-                    <div class="ticker">${d.symbol}</div>
-                `;
-
-                const right = document.createElement("div");
-                right.style.textAlign = "right";
-                right.innerHTML = `
-                    <div class="price">${d.price}</div>
-                    <div class="price-label">aktuální cena</div>
-                `;
-
-                header.appendChild(left);
-                header.appendChild(right);
-                card.appendChild(header);
-
-                const tfSwitch = document.createElement("div");
-                tfSwitch.className = "tf-switch";
-
-                const tfHeatmap = document.createElement("div");
-                tfHeatmap.className = "tf-heatmap";
-
-                const pillRow = document.createElement("div");
-                pillRow.className = "pill-row";
-
-                const rsiRow = document.createElement("div");
-                rsiRow.className = "row";
-                const atrRow = document.createElement("div");
-                atrRow.className = "row";
-
-                const plan = document.createElement("div");
-                plan.className = "plan";
-                plan.innerHTML = `
-                    <div class="plan-title">🎯 Obchodní plán (5m)</div>
-                    <div class="plan-grid">
-                        <div class="plan-label">Vstup</div>
-                        <div class="plan-value">${d.entry}</div>
-                        <div class="plan-label">SL</div>
-                        <div class="plan-value">${d.stop_loss}</div>
-                        <div class="plan-label">TP</div>
-                        <div class="plan-value">${d.take_profit}</div>
-                        <div class="plan-label">Objem</div>
-                        <div class="plan-value">${d.volume}</div>
-                    </div>
-                `;
-
-                const footer = document.createElement("div");
-                footer.className = "footer-row";
-                const cleanSymbol = d.symbol.replace("=F", "");
-                footer.innerHTML = `
-                    <a class="link" href="https://www.tradingview.com/symbols/${cleanSymbol}" target="_blank">
-                        📈 Otevřít graf
-                    </a>
-                    <div>Aktualizováno: ${d.timestamp}</div>
-                `;
-
-                card.appendChild(tfSwitch);
-                card.appendChild(tfHeatmap);
-                card.appendChild(pillRow);
-                card.appendChild(rsiRow);
-                card.appendChild(atrRow);
-                card.appendChild(plan);
-                card.appendChild(footer);
-
-                function renderForTf(tf) {
-                    const block = tfData[tf] || {};
-                    const trendClass = classifyTrend(block.trend || d.trend);
-                    const trendText = block.trend || d.trend;
-                    const pred = block.prediction || d.prediction;
-                    const predScore = block.prediction_score ?? d.prediction_score;
-
-                    pillRow.innerHTML = `
-                        <div class="pill pill-strong">TF: ${tf}</div>
-                        <div class="pill ${trendClass === "bull" ? "pill-bull" : trendClass === "bear" ? "pill-bear" : ""}">
-                            Trend: ${trendText || "-"} ${trendEmoji(trendText)}
-                        </div>
-                        <div class="pill">
-                            Predikce: ${pred || "-"} ${predictionEmoji(pred)} (score ${predScore ?? "-"})
-                        </div>
-                        <div class="pill">
-                            Sentiment: ${d.sentiment}
-                        </div>
-                    `;
-
-                    rsiRow.innerHTML = `
-                        <div class="row-label">RSI (${tf})</div>
-                        <div class="row-value">${(block.rsi ?? d.rsi).toFixed(2)}</div>
-                    `;
-                    atrRow.innerHTML = `
-                        <div class="row-label">ATR (${tf})</div>
-                        <div class="row-value">${(block.atr ?? d.atr).toFixed(4)}</div>
-                    `;
-
-                    buildHeatmap(tfHeatmap, tfData);
-                }
-
-                if (activeTf) {
-                    createTfButtons(tfSwitch, symbol, d, activeTf, renderForTf);
-                    renderForTf(activeTf);
-                } else {
-                    pillRow.innerHTML = `
-                        <div class="pill pill-strong">TF: 5m</div>
-                        <div class="pill">
-                            Trend: ${d.trend} ${trendEmoji(d.trend)}
-                        </div>
-                        <div class="pill">
-                            Predikce: ${d.prediction} ${predictionEmoji(d.prediction)} (score ${d.prediction_score})
-                        </div>
-                        <div class="pill">
-                            Sentiment: ${d.sentiment}
-                        </div>
-                    `;
-                    rsiRow.innerHTML = `
-                        <div class="row-label">RSI</div>
-                        <div class="row-value">${d.rsi}</div>
-                    `;
-                    atrRow.innerHTML = `
-                        <div class="row-label">ATR</div>
-                        <div class="row-value">${d.atr}</div>
-                    `;
-                }
-
-                container.appendChild(card);
-            });
-
-        } catch (e) {
-            document.getElementById("status").innerText = "Chyba načítání data.json";
-            document.getElementById("status").className = "status-error";
-        }
-    }
-
-    loadData();
+loadData().then(() => {
+    fetch("data.json?cache=" + Date.now())
+        .then(r => r.json())
+        .then(j => window.dashboardData = j);
+});
 </script>
 
 </body>
