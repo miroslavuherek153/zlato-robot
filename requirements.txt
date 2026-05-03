@@ -4,3 +4,4 @@ requests
 textblob
 pyyaml
 regex
+numpy
