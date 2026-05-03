@@ -101,24 +101,39 @@ def analyzuj(symbol, nazev):
     clean_symbol = symbol.replace("=F", "")
     chart_url = f"https://www.tradingview.com/symbols/{clean_symbol}"
 
-    # --- Discord embed ---
+       # --- Discord embed ---
+    emoji = "🚀" if pred_dir == "UP" else "📉" if pred_dir == "DOWN" else "⚪"
+    sentiment_emoji = "🟢" if sentiment > 60 else "🟡" if sentiment >= 40 else "🔴"
+
     payload = {
         "embeds": [{
-            "title": nazev,
-            "description": f"Aktuální trend je **{smer}**",
+            "title": f"{emoji} {nazev} — {smer}",
+            "description": (
+                f"**Predikce:** {emoji} `{pred_dir}` (score {pred_score})\n"
+                f"**Sentiment:** {sentiment_emoji} `{sentiment:.0f}` / 100\n"
+                f"**VWAP:** `{vwap:.2f}`\n"
+                f"**RSI:** `{rsi_val:.0f}`\n"
+            ),
             "color": barva,
             "fields": [
-                {"name": "RSI", "value": f"`{rsi_val:.0f}`"},
-                {"name": "VWAP", "value": f"`{vwap:.2f}`"},
-                {"name": "Sentiment", "value": f"`{sentiment:.0f}` / 100"},
-                {"name": "Predikce", "value": f"`{pred_dir}` ({pred_score})"},
-                {"name": "Objem", "value": f"`{pocet} ks`"},
-                {"name": "Obchodní plán", "value": f"VSTUP `{vstup:.2f}`\nSTOP `{sl:.2f}`\nTARGET `{tp:.2f}`"},
-                {"name": "Graf", "value": f"[Otevřít graf]({chart_url})"}
+                {
+                    "name": "📊 Obchodní plán",
+                    "value": (
+                        f"**Vstup:** `{vstup:.2f}`\n"
+                        f"**Stop-Loss:** `{sl:.2f}`\n"
+                        f"**Take-Profit:** `{tp:.2f}`\n"
+                        f"**Objem:** `{pocet} ks`"
+                    )
+                },
+                {
+                    "name": "📈 Graf",
+                    "value": f"[Otevřít TradingView]({chart_url})"
+                }
             ],
             "timestamp": datetime.utcnow().isoformat()
         }]
     }
+
 
     # --- Odeslání na Discord ---
     if DISCORD_WEBHOOK:
