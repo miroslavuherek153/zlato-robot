@@ -3,3 +3,4 @@ pandas
 requests
 textblob
 pyyaml
+regex
