@@ -2,22 +2,45 @@ name: Zlato-Robot
 
 on:
   schedule:
-    # Čas v UTC (14:35 UTC = 16:35 v Praze)
-    # Spouští se v 09:05, 15:35 a 20:05 (jen pondělí až pátek)
+    # 09:05, 15:35, 20:05 (UTC časy)
     - cron: '05 07 * * 1-5'
     - cron: '35 13 * * 1-5'
     - cron: '05 18 * * 1-5'
-  workflow_dispatch: # Umožní ti to spustit i ručně tlačítkem
+  workflow_dispatch:
 
 jobs:
   run:
     runs-on: ubuntu-latest
+    timeout-minutes: 10   # ochrana proti zaseknutí
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
-      - run: pip install -r requirements.txt
-      - env:
+          python-version: '3.10'
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run robot
+        env:
+          GOLDAPI_KEY: ${{ secrets.GOLDAPI_KEY }}
+          TWELVEDATA_KEY: ${{ secrets.TWELVEDATA_KEY }}
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
+          MAILGUN_DOMAIN: ${{ secrets.MAILGUN_DOMAIN }}
+          MAIL_TO: ${{ secrets.MAIL_TO }}
         run: python robot.py
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: robot-logs
+          path: logs/
