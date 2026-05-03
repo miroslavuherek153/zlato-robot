@@ -1,0 +1,29 @@
+# ============================
+# 🔧 ZÁKLADNÍ NASTAVENÍ
+# ============================
+
+risk_na_obchod: 50
+
+timeframe: "5m"
+period_days: 5
+
+# ============================
+# 📈 INDIKÁTORY
+# ============================
+
+indikatory:
+  rsi_period: 14
+  atr_period: 14
+  atr_multiplier: 1.5
+  rrr: 2.0
+
+# ============================
+# 📊 SYMBOLY
+# ============================
+
+symboly:
+  GC=F: "🏆 ZLATO (v oz)"
+  NVDA: "🤖 NVIDIA (v ks)"
+  TSLA: "⚡ TESLA (v ks)"
+  BITO: "₿ BITCOIN ETF (BITO)"
+  ETHV: "⟠ ETHEREUM ETF (ETHV)"
