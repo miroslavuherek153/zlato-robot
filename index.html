@@ -19,9 +19,7 @@
             --flat: #eab308;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
             background: radial-gradient(circle at top, #111827 0, #020617 55%);
@@ -54,13 +52,8 @@
             font-size: 13px;
         }
 
-        .status-ok {
-            color: #4ade80;
-        }
-
-        .status-error {
-            color: #f97373;
-        }
+        .status-ok { color: #4ade80; }
+        .status-error { color: #f97373; }
 
         .container {
             max-width: 1100px;
@@ -163,17 +156,8 @@
             z-index: 1;
         }
 
-        .row-label {
-            color: var(--text-muted);
-        }
-
-        .row-value {
-            font-weight: 500;
-        }
-
-        .row-small {
-            font-size: 12px;
-        }
+        .row-label { color: var(--text-muted); }
+        .row-value { font-weight: 500; }
 
         .plan {
             margin-top: 8px;
@@ -196,13 +180,8 @@
             font-size: 12px;
         }
 
-        .plan-label {
-            color: var(--text-muted);
-        }
-
-        .plan-value {
-            font-weight: 500;
-        }
+        .plan-label { color: var(--text-muted); }
+        .plan-value { font-weight: 500; }
 
         .footer-row {
             display: flex;
@@ -221,38 +200,56 @@
             font-size: 11px;
         }
 
-        .link:hover {
-            text-decoration: underline;
+        .link:hover { text-decoration: underline; }
+
+        .tf-switch {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin: 4px 0 6px;
+            position: relative;
+            z-index: 1;
         }
 
-        .tf-badges {
+        .tf-btn {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(148,163,184,0.6);
+            background: rgba(15,23,42,0.9);
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .tf-btn.active {
+            border-color: rgba(250,204,21,0.9);
+            color: var(--accent);
+            background: rgba(24,24,27,0.95);
+        }
+
+        .tf-heatmap {
             display: flex;
             gap: 4px;
             flex-wrap: wrap;
             margin-top: 4px;
-            font-size: 10px;
+            font-size: 9px;
         }
 
-        .tf-badge {
+        .tf-dot {
             padding: 2px 6px;
             border-radius: 999px;
-            border: 1px solid rgba(148,163,184,0.6);
-            color: var(--text-muted);
+            border: 1px solid rgba(148,163,184,0.4);
             background: rgba(15,23,42,0.9);
+            color: var(--text-muted);
         }
 
-        .tf-badge-main {
-            border-color: rgba(250,204,21,0.9);
-            color: var(--accent);
-        }
+        .tf-dot.bull { border-color: rgba(34,197,94,0.8); color: var(--bull); }
+        .tf-dot.bear { border-color: rgba(239,68,68,0.8); color: var(--bear); }
+        .tf-dot.flat { border-color: rgba(234,179,8,0.8); color: var(--flat); }
 
         @media (max-width: 600px) {
-            header {
-                padding-top: 18px;
-            }
-            h1 {
-                font-size: 24px;
-            }
+            header { padding-top: 18px; }
+            h1 { font-size: 24px; }
         }
     </style>
 </head>
@@ -260,29 +257,68 @@
 
 <header>
     <h1>📊 Trading Dashboard</h1>
-    <div class="subtitle">Aktuální signály, trend, sentiment a obchodní plán</div>
+    <div class="subtitle">Multi-timeframe analýza, trend, sentiment a obchodní plán (5m)</div>
     <div id="status">Načítám data…</div>
 </header>
 
 <div class="container" id="cards"></div>
 
 <script>
-    // Připraveno na multi-timeframe: backend může později posílat např. data[symbol].timeframes = { "5m": {...}, "1h": {...} }
     const url = "https://miroslavuherek153.github.io/zlato-robot/data.json";
 
-    function classifyTrend(trend) {
-        if (!trend) return "";
-        const t = trend.toUpperCase();
-        if (t.includes("LONG") || t.includes("UP")) return "bull";
-        if (t.includes("SHORT") || t.includes("DOWN")) return "bear";
+    const AVAILABLE_TF = ["5m", "30m", "1h", "1d"]; // 4h můžeš přidat později
+
+    function classifyTrend(trendText) {
+        if (!trendText) return "flat";
+        const t = trendText.toUpperCase();
+        if (t.includes("LONG")) return "bull";
+        if (t.includes("SHORT")) return "bear";
         return "flat";
     }
 
-    function trendEmoji(trend) {
-        const t = classifyTrend(trend);
+    function trendEmoji(trendText) {
+        const t = classifyTrend(trendText);
         if (t === "bull") return "🟢";
         if (t === "bear") return "🔴";
         return "🟡";
+    }
+
+    function predictionEmoji(pred) {
+        if (!pred) return "⚪";
+        const p = pred.toUpperCase();
+        if (p === "UP") return "🚀";
+        if (p === "DOWN") return "📉";
+        return "⚪";
+    }
+
+    function createTfButtons(tfContainer, symbolKey, data, initialTf, onChange) {
+        AVAILABLE_TF.forEach(tf => {
+            if (!data.timeframes || !data.timeframes[tf]) return;
+            const btn = document.createElement("button");
+            btn.className = "tf-btn" + (tf === initialTf ? " active" : "");
+            btn.textContent = tf;
+            btn.dataset.tf = tf;
+            btn.addEventListener("click", () => {
+                const all = tfContainer.querySelectorAll(".tf-btn");
+                all.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                onChange(tf);
+            });
+            tfContainer.appendChild(btn);
+        });
+    }
+
+    function buildHeatmap(tfHeatmap, timeframes) {
+        tfHeatmap.innerHTML = "";
+        Object.keys(timeframes).forEach(tf => {
+            const block = timeframes[tf];
+            if (!block) return;
+            const dot = document.createElement("div");
+            const cls = classifyTrend(block.trend);
+            dot.className = "tf-dot " + cls;
+            dot.textContent = tf.toUpperCase();
+            tfHeatmap.appendChild(dot);
+        });
     }
 
     async function loadData() {
@@ -305,77 +341,138 @@
                 if (symbol === "updated") return;
 
                 const d = data[symbol];
-
-                // Multi-timeframe příprava:
-                // pokud backend někdy pošle d.timeframes = { "5m": {...}, "1h": {...} },
-                // můžeme tady zobrazit přepínače nebo souhrn.
-                // Zatím zobrazujeme hlavní (aktuální) TF jako "5m".
                 const mainTf = "5m";
-
-                const trendClass = classifyTrend(d.trend);
-                let priceColor = "#e5e7eb";
-                if (trendClass === "bull") priceColor = "#4ade80";
-                else if (trendClass === "bear") priceColor = "#f97373";
-                else if (trendClass === "flat") priceColor = "#eab308";
+                const tfData = d.timeframes || {};
+                const activeTf = tfData[mainTf] ? mainTf : Object.keys(tfData)[0] || null;
 
                 const card = document.createElement("div");
                 card.className = "card";
 
-                card.innerHTML = `
-                    <div class="card-header">
-                        <div>
-                            <div class="symbol">${d.nazev}</div>
-                            <div class="ticker">${d.symbol}</div>
-                        </div>
-                        <div style="text-align:right;">
-                            <div class="price" style="color:${priceColor};">${d.price}</div>
-                            <div class="price-label">aktuální cena</div>
-                        </div>
-                    </div>
+                const header = document.createElement("div");
+                header.className = "card-header";
 
-                    <div class="pill-row">
-                        <div class="pill pill-strong">TF: ${mainTf}</div>
+                const left = document.createElement("div");
+                left.innerHTML = `
+                    <div class="symbol">${d.nazev}</div>
+                    <div class="ticker">${d.symbol}</div>
+                `;
+
+                const right = document.createElement("div");
+                right.style.textAlign = "right";
+                right.innerHTML = `
+                    <div class="price">${d.price}</div>
+                    <div class="price-label">aktuální cena</div>
+                `;
+
+                header.appendChild(left);
+                header.appendChild(right);
+                card.appendChild(header);
+
+                const tfSwitch = document.createElement("div");
+                tfSwitch.className = "tf-switch";
+
+                const tfHeatmap = document.createElement("div");
+                tfHeatmap.className = "tf-heatmap";
+
+                const pillRow = document.createElement("div");
+                pillRow.className = "pill-row";
+
+                const rsiRow = document.createElement("div");
+                rsiRow.className = "row";
+                const atrRow = document.createElement("div");
+                atrRow.className = "row";
+
+                const plan = document.createElement("div");
+                plan.className = "plan";
+                plan.innerHTML = `
+                    <div class="plan-title">🎯 Obchodní plán (5m)</div>
+                    <div class="plan-grid">
+                        <div class="plan-label">Vstup</div>
+                        <div class="plan-value">${d.entry}</div>
+                        <div class="plan-label">SL</div>
+                        <div class="plan-value">${d.stop_loss}</div>
+                        <div class="plan-label">TP</div>
+                        <div class="plan-value">${d.take_profit}</div>
+                        <div class="plan-label">Objem</div>
+                        <div class="plan-value">${d.volume}</div>
+                    </div>
+                `;
+
+                const footer = document.createElement("div");
+                footer.className = "footer-row";
+                const cleanSymbol = d.symbol.replace("=F", "");
+                footer.innerHTML = `
+                    <a class="link" href="https://www.tradingview.com/symbols/${cleanSymbol}" target="_blank">
+                        📈 Otevřít graf
+                    </a>
+                    <div>Aktualizováno: ${d.timestamp}</div>
+                `;
+
+                card.appendChild(tfSwitch);
+                card.appendChild(tfHeatmap);
+                card.appendChild(pillRow);
+                card.appendChild(rsiRow);
+                card.appendChild(atrRow);
+                card.appendChild(plan);
+                card.appendChild(footer);
+
+                function renderForTf(tf) {
+                    const block = tfData[tf] || {};
+                    const trendClass = classifyTrend(block.trend || d.trend);
+                    const trendText = block.trend || d.trend;
+                    const pred = block.prediction || d.prediction;
+                    const predScore = block.prediction_score ?? d.prediction_score;
+
+                    pillRow.innerHTML = `
+                        <div class="pill pill-strong">TF: ${tf}</div>
                         <div class="pill ${trendClass === "bull" ? "pill-bull" : trendClass === "bear" ? "pill-bear" : ""}">
-                            Trend: ${d.trend} ${trendEmoji(d.trend)}
+                            Trend: ${trendText || "-"} ${trendEmoji(trendText)}
                         </div>
                         <div class="pill">
-                            Predikce: ${d.prediction} (score ${d.prediction_score})
+                            Predikce: ${pred || "-"} ${predictionEmoji(pred)} (score ${predScore ?? "-"})
                         </div>
                         <div class="pill">
                             Sentiment: ${d.sentiment}
                         </div>
-                    </div>
+                    `;
 
-                    <div class="row">
+                    rsiRow.innerHTML = `
+                        <div class="row-label">RSI (${tf})</div>
+                        <div class="row-value">${(block.rsi ?? d.rsi).toFixed(2)}</div>
+                    `;
+                    atrRow.innerHTML = `
+                        <div class="row-label">ATR (${tf})</div>
+                        <div class="row-value">${(block.atr ?? d.atr).toFixed(4)}</div>
+                    `;
+
+                    buildHeatmap(tfHeatmap, tfData);
+                }
+
+                if (activeTf) {
+                    createTfButtons(tfSwitch, symbol, d, activeTf, renderForTf);
+                    renderForTf(activeTf);
+                } else {
+                    pillRow.innerHTML = `
+                        <div class="pill pill-strong">TF: 5m</div>
+                        <div class="pill">
+                            Trend: ${d.trend} ${trendEmoji(d.trend)}
+                        </div>
+                        <div class="pill">
+                            Predikce: ${d.prediction} ${predictionEmoji(d.prediction)} (score ${d.prediction_score})
+                        </div>
+                        <div class="pill">
+                            Sentiment: ${d.sentiment}
+                        </div>
+                    `;
+                    rsiRow.innerHTML = `
                         <div class="row-label">RSI</div>
                         <div class="row-value">${d.rsi}</div>
-                    </div>
-                    <div class="row">
+                    `;
+                    atrRow.innerHTML = `
                         <div class="row-label">ATR</div>
                         <div class="row-value">${d.atr}</div>
-                    </div>
-
-                    <div class="plan">
-                        <div class="plan-title">🎯 Obchodní plán</div>
-                        <div class="plan-grid">
-                            <div class="plan-label">Vstup</div>
-                            <div class="plan-value">${d.entry}</div>
-                            <div class="plan-label">SL</div>
-                            <div class="plan-value">${d.stop_loss}</div>
-                            <div class="plan-label">TP</div>
-                            <div class="plan-value">${d.take_profit}</div>
-                            <div class="plan-label">Objem</div>
-                            <div class="plan-value">${d.volume}</div>
-                        </div>
-                    </div>
-
-                    <div class="footer-row">
-                        <a class="link" href="https://www.tradingview.com/symbols/${d.symbol.replace('=F','')}" target="_blank">
-                            📈 Otevřít graf
-                        </a>
-                        <div>Aktualizováno: ${d.timestamp}</div>
-                    </div>
-                `;
+                    `;
+                }
 
                 container.appendChild(card);
             });
