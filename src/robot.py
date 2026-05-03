@@ -9,6 +9,8 @@ from risk import calculate_position_size
 from notifier import send_discord
 from logger import log_info, log_error
 from sentiment import sentiment_score
+from prediction import trend_direction
+from exporter import save_json
 
 # ============================
 # 🔧 Načtení konfigurace
@@ -67,9 +69,20 @@ def analyzuj(symbol, nazev):
     sentiment = sentiment_score(symbol)
     log_info(f"Sentiment {symbol}: {sentiment:.0f}")
 
-    # Filtr: neobchodovat při příliš negativním sentimentu
     if sentiment < 40:
         log_info(f"Sentiment příliš negativní ({sentiment:.0f}), obchod přeskočen.")
+        return
+
+    # --- Trend Prediction ---
+    pred_dir, pred_score = trend_direction(close)
+    log_info(f"Predikce {symbol}: {pred_dir} ({pred_score})")
+
+    # Filtr predikce
+    if pred_dir == "DOWN" and current_price > vwap:
+        log_info("Predikce proti trendu → obchod přeskočen.")
+        return
+    if pred_dir == "UP" and current_price < vwap:
+        log_info("Predikce proti trendu → obchod přeskočen.")
         return
 
     # --- Trend ---
@@ -89,27 +102,62 @@ def analyzuj(symbol, nazev):
     clean_symbol = symbol.replace("=F", "")
     chart_url = f"https://www.tradingview.com/symbols/{clean_symbol}"
 
-    # --- Discord embed ---
+    # --- Discord embed (vylepšený) ---
+    emoji = "🚀" if pred_dir == "UP" else "📉" if pred_dir == "DOWN" else "⚪"
+    sentiment_emoji = "🟢" if sentiment > 60 else "🟡" if sentiment >= 40 else "🔴"
+
     payload = {
         "embeds": [{
-            "title": nazev,
-            "description": f"Aktuální trend je **{smer}**",
+            "title": f"{emoji} {nazev} — {smer}",
+            "description": (
+                f"**Predikce:** {emoji} `{pred_dir}` (score {pred_score})\n"
+                f"**Sentiment:** {sentiment_emoji} `{sentiment:.0f}` / 100\n"
+                f"**VWAP:** `{vwap:.2f}`\n"
+                f"**RSI:** `{rsi_val:.0f}`\n"
+            ),
             "color": barva,
             "fields": [
-                {"name": "RSI", "value": f"`{rsi_val:.0f}`"},
-                {"name": "VWAP", "value": f"`{vwap:.2f}`"},
-                {"name": "Sentiment", "value": f"`{sentiment:.0f}` / 100"},
-                {"name": "Objem", "value": f"`{pocet} ks`"},
-                {"name": "Obchodní plán", "value": f"VSTUP `{vstup:.2f}`\nSTOP `{sl:.2f}`\nTARGET `{tp:.2f}`"},
-                {"name": "Graf", "value": f"[Otevřít graf]({chart_url})"}
+                {
+                    "name": "📊 Obchodní plán",
+                    "value": (
+                        f"**Vstup:** `{vstup:.2f}`\n"
+                        f"**Stop-Loss:** `{sl:.2f}`\n"
+                        f"**Take-Profit:** `{tp:.2f}`\n"
+                        f"**Objem:** `{pocet} ks`"
+                    )
+                },
+                {
+                    "name": "📈 Graf",
+                    "value": f"[Otevřít TradingView]({chart_url})"
+                }
             ],
             "timestamp": datetime.utcnow().isoformat()
         }]
     }
 
-    # --- Odeslání na Discord ---
     if DISCORD_WEBHOOK:
         send_discord(DISCORD_WEBHOOK, payload)
+
+    # --- JSON export ---
+    json_data = {
+        "symbol": symbol,
+        "nazev": nazev,
+        "price": current_price,
+        "vwap": vwap,
+        "rsi": float(rsi_val),
+        "atr": float(atr_val),
+        "sentiment": float(sentiment),
+        "prediction": pred_dir,
+        "prediction_score": pred_score,
+        "trend": smer,
+        "entry": vstup,
+        "stop_loss": sl,
+        "take_profit": tp,
+        "volume": pocet,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+    save_json(symbol, json_data)
 
     log_info(f"Hotovo: {symbol}")
 
