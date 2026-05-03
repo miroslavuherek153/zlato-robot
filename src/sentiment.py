@@ -4,9 +4,10 @@ from textblob import TextBlob
 def fetch_yahoo_news(symbol):
     url = f"https://query1.finance.yahoo.com/v1/finance/search?q={symbol}"
     try:
-        r = requests.get(url, timeout=5).json()
-        return r.get("news", [])
-    except:
+        r = requests.get(url, timeout=5)
+        data = r.json()
+        return data.get("news", [])
+    except Exception:
         return []
 
 def analyze_sentiment(text):
@@ -17,15 +18,15 @@ def analyze_sentiment(text):
 def sentiment_score(symbol):
     news = fetch_yahoo_news(symbol)
     if not news:
-        return 50  # neutrální
+        return 50.0  # neutrální
 
     scores = []
-    for item in news[:5]:  # vezmeme max 5 článků
+    for item in news[:5]:  # max 5 článků
         title = item.get("title", "")
         if title:
             scores.append(analyze_sentiment(title))
 
     if not scores:
-        return 50
+        return 50.0
 
     return sum(scores) / len(scores)
