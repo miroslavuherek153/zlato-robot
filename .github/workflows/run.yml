@@ -2,9 +2,18 @@ name: Zlato-Robot
 
 on:
   schedule:
-    - cron: '05 07 * * 1-5'
-    - cron: '35 13 * * 1-5'
-    - cron: '05 18 * * 1-5'
+    - cron: '0 6 * * 1-5'     # 06:00 UTC - před London open
+    - cron: '0 8 * * 1-5'     # 08:00 UTC
+    - cron: '0 10 * * 1-5'    # 10:00 UTC
+    - cron: '0 12 * * 1-5'    # 12:00 UTC
+    - cron: '0 13 * * 1-5'    # 13:00 UTC - před NY open
+    - cron: '0 14 * * 1-5'    # 14:00 UTC
+    - cron: '0 15 * * 1-5'    # 15:00 UTC
+    - cron: '0 16 * * 1-5'    # 16:00 UTC
+    - cron: '0 17 * * 1-5'    # 17:00 UTC
+    - cron: '0 18 * * 1-5'    # 18:00 UTC
+    - cron: '0 19 * * 1-5'    # 19:00 UTC
+    - cron: '0 20 * * 1-5'    # 20:00 UTC - NY close
   workflow_dispatch:
 
 jobs:
