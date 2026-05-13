@@ -2,26 +2,32 @@ import json
 import os
 from src.robot import analyzuj_xauusd
 
-def main():
-    print("--- ZLATO ROBOT: Startuji analýzu ---")
+def spustit_analýzu():
+    print("--- 🔍 ZLATO-ROBOT: Startuji analýzu trhu ---")
     
     try:
-        # Spuštění analýzy z mozku v src/
+        # Voláme mozek aplikace
         vysledek = analyzuj_xauusd()
         
-        # Uložení výsledku do data.json pro tvůj webový dashboard
+        # Uložíme výsledek do JSONu pro tvůj dashboard
         with open("data.json", "w", encoding="utf-8") as f:
             json.dump(vysledek, f, indent=4, ensure_ascii=False)
             
-        # Výpis do konzole pro kontrolu v GitHub Actions
-        print(f"TRH: {vysledek['trend']}")
-        print(f"AKCE: {vysledek['akce']}")
-        if vysledek['sl'] > 0:
-            print(f"VSTUP: {vysledek['cena']} | SL: {vysledek['sl']} | TP: {vysledek['tp']}")
-        print("--- Analýza dokončena a uložena do data.json ---")
+        # Výpis pro tebe do konzole
+        print(f"Aktuální cena: {vysledek['cena']} USD")
+        print(f"Hlavní trend: {vysledek['trend']}")
+        print(f"DOPORUČENÍ: {vysledek['akce']}")
+        
+        if vysledek['akce'] != "ČEKAT":
+            print(f"🎯 Vstup: {vysledek['cena']}")
+            print(f"🛑 Stop-Loss: {vysledek['sl']}")
+            print(f"💰 Take-Profit: {vysledek['tp']}")
+        
+        print(f"💡 Důvod: {vysledek['duvod']}")
+        print("--- ✅ Analýza dokončena a data uložena ---")
 
     except Exception as e:
-        print(f"KRITICKÁ CHYBA: {e}")
+        print(f"❌ CHYBA: {str(e)}")
 
 if __name__ == "__main__":
-    main()
+    spustit_analýzu()
