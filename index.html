@@ -1,60 +1,39 @@
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-    <meta charset="UTF-8">
-    <title>XAUUSD Terminal</title>
-    <style>
-        body { background: #1a202c; color: #f8fafc; font-family: sans-serif; display: flex; justify-content: center; padding-top: 50px; }
-        .terminal { background: #2d3748; padding: 40px; border-radius: 20px; width: 600px; border: 2px solid #4a5568; }
-        h1 { color: #ecc94b; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
-        .box { background: #3c4858; padding: 20px; border-radius: 12px; text-align: center; }
-        .label { color: #a0aec0; font-size: 0.9em; margin-bottom: 10px; display: block; }
-        .value { font-size: 1.8em; font-weight: bold; }
-        .main-signal { margin-top: 30px; padding: 30px; border-radius: 12px; text-align: center; font-size: 2em; font-weight: 900; background: #3c4858; }
-        .buy { background: #2f855a; }
-        .sell { background: #c53030; }
-        .footer { text-align: center; font-size: 0.8em; color: #718096; margin-top: 30px; }
-    </style>
-</head>
-<body>
-    <div class="terminal">
-        <h1>XAUUSD TERMINAL</h1>
-        <div class="grid">
-            <div class="box"><span class="label">Aktuální Cena</span><div class="value" id="price">...</div></div>
-            <div class="box"><span class="label">H1 Trend</span><div class="value" id="trend">...</div></div>
-            <div class="box"><span class="label">RSI (M15)</span><div class="value" id="rsi">...</div></div>
-            <div class="box"><span class="label">Pár</span><div class="value">Gold Spot</div></div>
-        </div>
-        <div id="signal" class="main-signal">NAČÍTÁM...</div>
-        <div class="grid" id="levels" style="display: none;">
-            <div class="box"><span class="label">Stop-Loss (SL)</span><div class="value" id="sl">...</div></div>
-            <div class="box"><span class="label">Take-Profit (TP)</span><div class="value" id="tp">...</div></div>
-        </div>
-        <div class="footer">Data se aktualizují každých 15 minut pomocí GitHub Actions.</div>
+<div class="terminal">
+    <h1>XAUUSD H1 STRATEGY</h1>
+    <div class="grid">
+        <div class="box"><span class="label">Aktuální Cena</span><div class="value" id="price">...</div></div>
+        <div class="box"><span class="label">VWAP Hladina</span><div class="value" id="vwap">...</div></div>
+        <div class="box"><span class="label">Doporučený Vstup</span><div class="value" id="vstup">...</div></div>
+        <div class="box"><span class="label">Trh</span><div class="value">XAUUSD (Gold)</div></div>
     </div>
+    
+    <div id="signal" class="main-signal">NAČÍTÁM STRATEGII...</div>
 
-    <script>
-        async function update() {
-            const res = await fetch('data.json');
-            const d = await res.json();
-            document.getElementById('price').innerText = '$' + d.cena;
-            document.getElementById('trend').innerText = d.trend;
-            document.getElementById('rsi').innerText = d.rsi;
-            
-            const sig = document.getElementById('signal');
-            const levels = document.getElementById('levels');
-            sig.innerText = d.akce;
-            
-            if(d.akce.includes('LONG')) { sig.className = 'main-signal buy'; levels.style.display = 'grid'; }
-            else if(d.akce.includes('SHORT')) { sig.className = 'main-signal sell'; levels.style.display = 'grid'; }
-            else { sig.className = 'main-signal'; levels.style.display = 'none'; }
-            
-            document.getElementById('sl').innerText = d.sl;
-            document.getElementById('tp').innerText = d.tp;
-        }
-        update();
-        setInterval(update, 60000);
-    </script>
-</body>
-</html>
+    <div class="grid">
+        <div class="box" style="border-bottom: 4px solid #ef4444;"><span class="label">Stop-Loss (4.5b)</span><div class="value" id="sl">...</div></div>
+        <div class="box" style="border-bottom: 4px solid #22c55e;"><span class="label">Take-Profit (2b)</span><div class="value" id="tp">...</div></div>
+    </div>
+    <div class="footer">Strategie: Vstup pod/nad H1 svíci dle VWAP (07:00+). [cite: 1, 6]</div>
+</div>
+
+<script>
+    async function update() {
+        const res = await fetch('data.json?t=' + Date.now());
+        const d = await res.json();
+        
+        document.getElementById('price').innerText = d.cena;
+        document.getElementById('vwap').innerText = d.vwap;
+        document.getElementById('vstup').innerText = d.vstup;
+        document.getElementById('sl').innerText = d.sl;
+        document.getElementById('tp').innerText = d.tp;
+        
+        const sig = document.getElementById('signal');
+        sig.innerText = d.akce;
+        
+        if(d.akce.includes('SHORT')) { sig.style.background = '#ef4444'; }
+        else if(d.akce.includes('LONG')) { sig.style.background = '#22c55e'; }
+        else { sig.style.background = '#3c4858'; }
+    }
+    update();
+    setInterval(update, 60000);
+</script>
