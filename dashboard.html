@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAUUSD H1 Strategy Terminal</title>
+    <title>XAUUSD Terminal | H1 Strategy</title>
     <style>
         :root {
-            --bg: #0d1117;
-            --card: #161b22;
+            --bg: #0b0e11;
+            --card: #1e2329;
             --gold: #f0b90b;
             --green: #2ebd85;
             --red: #f6465d;
-            --text: #eaecef;
+            --text-main: #eaecef;
             --text-dim: #848e9c;
-            --border: #30363d;
+            --border: #2b3139;
         }
 
         body {
             background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: var(--text-main);
+            font-family: 'BinancePlex', -apple-system, BlinkMacSystemFont, sans-serif;
             margin: 0;
             display: flex;
             justify-content: center;
@@ -27,189 +27,180 @@
             min-height: 100vh;
         }
 
-        .container {
+        .terminal-container {
             width: 100%;
-            max-width: 480px;
-            padding: 20px;
+            max-width: 450px;
+            padding: 15px;
         }
 
-        .terminal {
+        .card {
             background: var(--card);
             border: 1px solid var(--border);
-            border-radius: 16px;
+            border-radius: 20px;
             padding: 24px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
         }
 
         header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 { font-size: 1.1rem; color: var(--gold); margin: 0; text-transform: uppercase; }
+
+        .price-display {
             text-align: center;
-            margin-bottom: 24px;
+            margin-bottom: 25px;
         }
 
-        h1 {
-            color: var(--gold);
-            font-size: 1.5rem;
-            margin: 0;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .price-section {
-            text-align: center;
-            margin-bottom: 24px;
-        }
-
-        #current-price {
-            font-size: 3rem;
+        .current-price {
+            font-size: 3.5rem;
             font-weight: bold;
-            margin: 8px 0;
+            color: var(--text-main);
+            margin: 5px 0;
         }
 
-        .grid {
+        .label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
 
-        .stat-box {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid var(--border);
+        .stat-item {
+            background: #2b3139;
             padding: 12px;
             border-radius: 12px;
             text-align: center;
         }
 
-        .label {
-            color: var(--text-dim);
-            font-size: 0.75rem;
-            display: block;
-            margin-bottom: 4px;
+        .stat-value { font-size: 1.1rem; font-weight: 600; margin-top: 4px; }
+
+        .signal-banner {
+            padding: 18px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 20px;
             text-transform: uppercase;
         }
 
-        .val {
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
+        .wait { background: #3c444e; color: #929aa5; }
+        .buy { background: rgba(46, 189, 133, 0.2); color: var(--green); border: 1px solid var(--green); }
+        .sell { background: rgba(246, 70, 93, 0.2); color: var(--red); border: 1px solid var(--red); }
 
-        .signal-banner {
-            padding: 16px;
+        .trade-levels {
+            background: rgba(0,0,0,0.2);
             border-radius: 12px;
-            text-align: center;
-            font-size: 1.25rem;
-            font-weight: bold;
-            margin-bottom: 24px;
-            border: 1px solid transparent;
-        }
-
-        .wait { background: #2b2f36; color: var(--text-dim); }
-        .long { background: rgba(46, 189, 133, 0.15); color: var(--green); border-color: var(--green); }
-        .short { background: rgba(246, 70, 93, 0.15); color: var(--red); border-color: var(--red); }
-
-        .levels {
-            border-top: 1px solid var(--border);
-            padding-top: 20px;
+            padding: 15px;
         }
 
         .level-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 12px;
-            padding: 8px 0;
+            margin-bottom: 10px;
         }
 
-        .level-label { font-weight: 500; }
-        .level-val { font-family: monospace; font-size: 1.1rem; }
+        .level-row:last-child { margin-bottom: 0; }
 
         footer {
-            margin-top: 20px;
+            margin-top: 15px;
             text-align: center;
             font-size: 0.7rem;
             color: var(--text-dim);
-            line-height: 1.4;
+            line-height: 1.5;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="terminal">
+<div class="terminal-container">
+    <div class="card">
         <header>
-            <h1>XAUUSD H1 Monitor</h1>
+            <h1>XAUUSD Monitor</h1>
+            <span id="status-dot" style="color: var(--green)">● LIVE</span>
         </header>
 
-        <div class="price-section">
-            <span class="label">Aktuální cena zlata</span>
-            <div id="current-price">----.--</div>
+        <div class="price-display">
+            <span class="label">Aktuální spotová cena</span>
+            <div class="current-price" id="price">----.--</div>
         </div>
 
-        <div class="grid">
-            <div class="stat-box">
-                <span class="label">VWAP (H1)</span>
-                <div id="vwap-val" class="val">----.--</div>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <span class="label">VWAP Hladina</span>
+                <div class="stat-value" id="vwap">----.--</div>
             </div>
-            <div class="stat-box">
-                <span class="label">Session Čas</span>
-                <div class="val">07:00 - 12:00</div>
+            <div class="stat-item">
+                <span class="label">H1 Trend</span>
+                <div class="stat-value" id="trend">---</div>
             </div>
         </div>
 
         <div id="signal-box" class="signal-banner wait">
-            HLEDÁM SETUP...
+            Načítám analýzu...
         </div>
 
-        <div class="levels">
+        <div class="trade-levels">
             <div class="level-row">
-                <span class="level-label">Doporučený vstup:</span>
-                <span id="vstup-val" class="level-val">---</span>
+                <span class="label">Doporučený vstup</span>
+                <span class="stat-value" id="entry">--</span>
             </div>
-            <div class="level-row" style="color: var(--red);">
-                <span>Stop Loss (4.5b):</span>
-                <span id="sl-val" class="level-val">---</span>
+            <div class="level-row">
+                <span class="label" style="color: var(--red)">Stop Loss (4.5b)</span>
+                <span class="stat-value" id="sl" style="color: var(--red)">--</span>
             </div>
-            <div class="level-row" style="color: var(--green);">
-                <span>Take Profit (2b):</span>
-                <span id="tp-val" class="level-val">---</span>
+            <div class="level-row">
+                <span class="label" style="color: var(--green)">Take Profit (2b)</span>
+                <span class="stat-value" id="tp" style="color: var(--green)">--</span>
             </div>
         </div>
     </div>
-    
+
     <footer>
-        Strategie: Vstup pod Low / nad High H1 svíce dle VWAP [cite: 6]<br>
-        Aktualizace: Každých 15 minut přes GitHub Actions
+        Strategie: Vstup pod/nad H1 svíci dle VWAP [cite: 6, 49]<br>
+        Aktualizováno každých 15 minut (GitHub Actions)
     </footer>
 </div>
 
 <script>
-    async function updateDashboard() {
+    async function fetchData() {
         try {
-            const response = await fetch('data.json?t=' + new Date().getTime());
+            const url = 'https://raw.githubusercontent.com/miroslavuherek153/zlato-robot/main/data.json';
+            const response = await fetch(url + '?t=' + Date.now());
             const data = await response.json();
 
-            document.getElementById('current-price').innerText = data.cena.toFixed(2);
-            document.getElementById('vwap-val').innerText = data.vwap.toFixed(2);
-            document.getElementById('vstup-val').innerText = data.vstup !== "-" ? data.vstup.toFixed(2) : "-";
-            document.getElementById('sl-val').innerText = data.sl !== "-" ? data.sl.toFixed(2) : "-";
-            document.getElementById('tp-val').innerText = data.tp !== "-" ? data.tp.toFixed(2) : "-";
+            document.getElementById('price').innerText = data.cena;
+            document.getElementById('vwap').innerText = data.vwap;
+            document.getElementById('trend').innerText = data.trend;
+            document.getElementById('entry').innerText = data.vstup;
+            document.getElementById('sl').innerText = data.sl;
+            document.getElementById('tp').innerText = data.tp;
 
-            const signalBox = document.getElementById('signal-box');
-            signalBox.innerText = data.akce;
+            const box = document.getElementById('signal-box');
+            box.innerText = data.akce;
 
             if (data.akce.includes('SHORT')) {
-                signalBox.className = 'signal-banner short';
+                box.className = 'signal-banner sell';
             } else if (data.akce.includes('LONG')) {
-                signalBox.className = 'signal-banner long';
+                box.className = 'signal-banner buy';
             } else {
-                signalBox.className = 'signal-banner wait';
+                box.className = 'signal-banner wait';
             }
-        } catch (error) {
-            console.error('Chyba při načítání dat:', error);
+        } catch (e) {
+            console.error("Chyba při načítání dat:", e);
         }
     }
 
-    updateDashboard();
-    setInterval(updateDashboard, 60000);
+    fetchData();
+    setInterval(fetchData, 60000);
 </script>
 
 </body>
