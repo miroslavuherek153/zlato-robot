@@ -1,27 +1,27 @@
 name: Gold Robot Run
-
 on:
   schedule:
     - cron: '*/15 * * * *'
   workflow_dispatch:
 
 jobs:
-  analyze:
+  run-robot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
-      - name: Install Dependencies
+          python-version: '3.10' # Zde jsme opravili verzi Pythonu
+      - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install pandas pandas-ta yfinance
-      - name: Run Robot
+      - name: Run Analysis
         run: python robot.py
-      - name: Save Results
+      - name: Commit data
         run: |
-          git config --global user.name 'Zlato Robot'
+          git config --global user.name 'Robot'
           git config --global user.email 'robot@zlato.cz'
           git add data.json
           git commit -m "Update analysis" || exit 0
