@@ -159,8 +159,8 @@
             <div class="value" id="vstup">---</div>
         </div>
         <div class="stat-box">
-            <span class="label">Režim</span>
-            <div class="value" style="font-size: 1.1rem; color: var(--gold);">NON-STOP 24/5</div>
+            <span class="label">Trh</span>
+            <div class="value">Gold Spot</div>
         </div>
     </div>
 
@@ -180,9 +180,9 @@
     </div>
 
     <div class="footer">
-        Strategie: Vstup pod/nad H1 svíci dle VWAP [cite: 6, 49]<br>
-        Aktualizace: Každých 15 minut (GitHub Actions)<br>
-        <strong>Upozornění:</strong> CFD jsou rizikové nástroje. Obchoduj zodpovědně[cite: 94].
+        Strategie: Vstup pod/nad H1 svíci dle VWAP <br>
+        Interval: Non-stop (24/5) | Aktualizace: Každých 15 minut <br>
+        <strong>Upozornění:</strong> CFD jsou rizikové. Minulá výkonnost nezaručuje budoucí[cite: 94].
     </div>
 </div>
 
@@ -210,12 +210,12 @@
                 banner.classList.add('action-wait');
             }
         } catch (e) {
-            console.error("Chyba při aktualizaci dat z JSONu:", e);
+            console.error("Chyba při načítání dat.");
         }
     }
 
     updateDashboard();
-    setInterval(updateDashboard, 30000); // Kontrola každých 30 sekund
+    setInterval(updateDashboard, 60000);
 </script>
 
 </body>
