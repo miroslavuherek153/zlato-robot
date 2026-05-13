@@ -1,54 +1,67 @@
 import pandas as pd
-import pandas_ta as ta
 import yfinance as yf
 
-def analyzuj_xauusd():
-    # 1. Stažení reálných dat (Spotová cena zlata)
-    gold = yf.Ticker("GC=F")
-    df_h1 = gold.history(period="1mo", interval="1h")
-    df_m15 = gold.history(period="5d", interval="15m")
-
-    if df_h1.empty or df_m15.empty:
-        return {"akce": "CHYBA", "duvod": "Data nedostupná"}
-
-    # 2. TREND (H1) - EMA 200
-    # Pokud je cena nad EMA, hledáme jen nákupy (LONG).
-    df_h1['EMA200'] = ta.ema(df_h1['Close'], length=200)
-    posledni_h1 = df_h1['Close'].iloc[-1]
-    ema_h1 = df_h1['EMA200'].iloc[-1]
-    hlavni_trend = "LONG" if posledni_h1 > ema_h1 else "SHORT"
-
-    # 3. SIGNÁL (M15) - RSI a Volatilita (ATR)
-    df_m15['RSI'] = ta.rsi(df_m15['Close'], length=14)
-    df_m15['ATR'] = ta.atr(df_m15['High'], df_m15['Low'], df_m15['Close'], length=14)
+def get_indicators(df):
+    # RSI (Relative Strength Index)
+    delta = df['Close'].diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+    rs = gain / loss
+    df['RSI'] = 100 - (100 / (1 + rs))
     
-    cena = df_m15['Close'].iloc[-1]
-    rsi = df_m15['RSI'].iloc[-1]
-    atr = df_m15['ATR'].iloc[-1]
+    # EMA 200 (Exponential Moving Average)
+    df['EMA200'] = df['Close'].ewm(span=200, adjust=False).mean()
+    
+    # ATR (Average True Range) - pro dynamický SL/TP
+    high_low = df['High'] - df['Low']
+    high_close = (df['High'] - df['Close'].shift()).abs()
+    low_close = (df['Low'] - df['Close'].shift()).abs()
+    ranges = pd.concat([high_low, high_close, low_close], axis=1)
+    df['ATR'] = ranges.max(axis=1).rolling(window=14).mean()
+    
+    return df
 
-    # Výchozí stav
-    vysledek = {
-        "akce": "ČEKAT",
-        "trend": hlavni_trend,
-        "cena": round(cena, 2),
-        "sl": 0,
-        "tp": 0,
-        "duvod": "Hledám ideální příležitost"
+def analyze_xauusd():
+    gold = yf.Ticker("GC=F") # Zlaté futures (nejbližší spotu)
+    
+    # Stáhneme data
+    h1_data = gold.history(period="1mo", interval="1h")
+    m15_data = gold.history(period="5d", interval="15m")
+    
+    if h1_data.empty or m15_data.empty:
+        return {"error": "Nepodařilo se stáhnout data"}
+
+    h1 = get_indicators(h1_data)
+    m15 = get_indicators(m15_data)
+    
+    current_price = m15['Close'].iloc[-1]
+    trend_h1 = "UP" if current_price > h1['EMA200'].iloc[-1] else "DOWN"
+    rsi_m15 = m15['RSI'].iloc[-1]
+    atr = m15['ATR'].iloc[-1]
+    
+    output = {
+        "cena": round(current_price, 2),
+        "trend_h1": trend_h1,
+        "rsi": round(rsi_m15, 2),
+        "akce": "WAIT",
+        "vstup": None,
+        "sl": None,
+        "tp": None
     }
-
-    # 4. LOGIKA VSTUPU
-    # LONG: Trend je UP + Zlato je lokálně "levné" (RSI < 30)
-    if hlavni_trend == "LONG" and rsi < 30:
-        vysledek["akce"] = "LONG (BUY) 🟢"
-        vysledek["sl"] = round(cena - (atr * 3.5), 2) # SL 3.5x volatilita
-        vysledek["tp"] = round(cena + (atr * 7), 2)   # TP s RRR 1:2
-        vysledek["duvod"] = "Odraz nahoru v rostoucím trendu"
-
-    # SHORT: Trend je DOWN + Zlato je lokálně "drahé" (RSI > 70)
-    elif hlavni_trend == "SHORT" and rsi > 70:
-        vysledek["akce"] = "SHORT (SELL) 🔴"
-        vysledek["sl"] = round(cena + (atr * 3.5), 2)
-        vystup["tp"] = round(cena - (atr * 7), 2)
-        vysledek["duvod"] = "Odraz dolů v klesajícím trendu"
-
-    return vysledek
+    
+    # STRATEGIE:
+    # LONG: Trend na H1 je UP + RSI na M15 je pod 35 (zlato je levné)
+    if trend_h1 == "UP" and rsi_m15 < 35:
+        output["akce"] = "LONG (BUY) 🟢"
+        output["vstup"] = round(current_price, 2)
+        output["sl"] = round(current_price - (atr * 3), 2)
+        output["tp"] = round(current_price + (atr * 6), 2) # RRR 1:2
+        
+    # SHORT: Trend na H1 je DOWN + RSI na M15 je nad 65 (zlato je drahé)
+    elif trend_h1 == "DOWN" and rsi_m15 > 65:
+        output["akce"] = "SHORT (SELL) 🔴"
+        output["vstup"] = round(current_price, 2)
+        output["sl"] = round(current_price + (atr * 3), 2)
+        output["tp"] = round(current_price - (atr * 6), 2)
+        
+    return output
