@@ -1,51 +1,28 @@
-name: Zlato-Robot
+name: Gold Robot Run
 
 on:
   schedule:
-    - cron: '0 6 * * 1-5'     # 06:00 UTC - před London open
-    - cron: '0 8 * * 1-5'     # 08:00 UTC
-    - cron: '0 10 * * 1-5'    # 10:00 UTC
-    - cron: '0 12 * * 1-5'    # 12:00 UTC
-    - cron: '0 13 * * 1-5'    # 13:00 UTC - před NY open
-    - cron: '0 14 * * 1-5'    # 14:00 UTC
-    - cron: '0 15 * * 1-5'    # 15:00 UTC
-    - cron: '0 16 * * 1-5'    # 16:00 UTC
-    - cron: '0 17 * * 1-5'    # 17:00 UTC
-    - cron: '0 18 * * 1-5'    # 18:00 UTC
-    - cron: '0 19 * * 1-5'    # 19:00 UTC
-    - cron: '0 20 * * 1-5'    # 20:00 UTC - NY close
+    - cron: '*/15 * * * *' # Běží každých 15 minut
   workflow_dispatch:
 
 jobs:
-  run:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas pandas_ta yfinance
 
-      - name: Install TextBlob corpora
-        run: python -m textblob.download_corpora
-
-      - name: Run trading robot
+      - name: Run analysis
+        run: python robot.py
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-        run: python src/robot.py
-
-      - name: Commit data.json
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add data.json
-          git commit -m "Update data.json" || echo "No changes"
-          git push
