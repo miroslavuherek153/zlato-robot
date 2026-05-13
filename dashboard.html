@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAUUSD Terminal | H1 Strategy</title>
+    <title>XAUUSD | H1 Pro Terminal</title>
     <style>
         :root {
-            --bg: #0b0e11;
-            --card: #1e2329;
-            --gold: #f0b90b;
-            --green: #2ebd85;
-            --red: #f6465d;
-            --text-main: #eaecef;
-            --text-dim: #848e9c;
-            --border: #2b3139;
+            --bg: #111827;
+            --card: #1f2937;
+            --gold: #f59e0b;
+            --green: #10b981;
+            --red: #ef4444;
+            --text-main: #f3f4f6;
+            --text-dim: #9ca3af;
+            --border: #374151;
         }
 
         body {
             background-color: var(--bg);
             color: var(--text-main);
-            font-family: 'BinancePlex', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
             display: flex;
             justify-content: center;
@@ -27,180 +27,147 @@
             min-height: 100vh;
         }
 
-        .terminal-container {
-            width: 100%;
-            max-width: 450px;
-            padding: 15px;
-        }
-
-        .card {
+        .terminal {
             background: var(--card);
-            border: 1px solid var(--border);
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
             border-radius: 20px;
-            padding: 24px;
-            box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
         }
 
-        header {
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        h1 { font-size: 1.1rem; color: var(--gold); margin: 0; text-transform: uppercase; }
-
-        .price-display {
+        h1 {
+            color: var(--gold);
             text-align: center;
-            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-size: 1.4rem;
+            margin-top: 0;
         }
 
-        .current-price {
-            font-size: 3.5rem;
-            font-weight: bold;
-            color: var(--text-main);
-            margin: 5px 0;
-        }
-
-        .label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
-
-        .stats-grid {
+        .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 20px;
+            gap: 15px;
+            margin: 25px 0;
         }
 
-        .stat-item {
-            background: #2b3139;
-            padding: 12px;
+        .box {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            padding: 15px;
             border-radius: 12px;
             text-align: center;
         }
 
-        .stat-value { font-size: 1.1rem; font-weight: 600; margin-top: 4px; }
+        .label {
+            color: var(--text-dim);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 5px;
+        }
 
-        .signal-banner {
-            padding: 18px;
+        .value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .status-banner {
+            padding: 20px;
             border-radius: 12px;
             text-align: center;
             font-size: 1.3rem;
-            font-weight: 800;
-            margin-bottom: 20px;
-            text-transform: uppercase;
+            font-weight: bold;
+            margin-bottom: 25px;
+            background: #2d3748;
+            border: 1px solid var(--border);
         }
 
-        .wait { background: #3c444e; color: #929aa5; }
-        .buy { background: rgba(46, 189, 133, 0.2); color: var(--green); border: 1px solid var(--green); }
-        .sell { background: rgba(246, 70, 93, 0.2); color: var(--red); border: 1px solid var(--red); }
+        .buy { color: var(--green); border-color: var(--green); background: rgba(16,185,129,0.1); }
+        .sell { color: var(--red); border-color: var(--red); background: rgba(239,68,68,0.1); }
 
-        .trade-levels {
-            background: rgba(0,0,0,0.2);
-            border-radius: 12px;
-            padding: 15px;
-        }
-
-        .level-row {
+        .levels {
+            border-top: 1px solid var(--border);
+            padding-top: 20px;
             display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
+            justify-content: space-around;
         }
 
-        .level-row:last-child { margin-bottom: 0; }
-
-        footer {
-            margin-top: 15px;
+        .footer {
             text-align: center;
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             color: var(--text-dim);
-            line-height: 1.5;
+            margin-top: 25px;
         }
     </style>
 </head>
 <body>
 
-<div class="terminal-container">
-    <div class="card">
-        <header>
-            <h1>XAUUSD Monitor</h1>
-            <span id="status-dot" style="color: var(--green)">● LIVE</span>
-        </header>
+<div class="terminal">
+    <h1>XAUUSD H1 Terminal</h1>
 
-        <div class="price-display">
-            <span class="label">Aktuální spotová cena</span>
-            <div class="current-price" id="price">----.--</div>
+    <div class="grid">
+        <div class="box">
+            <span class="label">Aktuální Cena</span>
+            <div class="value" id="price">----.--</div>
         </div>
-
-        <div class="stats-grid">
-            <div class="stat-item">
-                <span class="label">VWAP Hladina</span>
-                <div class="stat-value" id="vwap">----.--</div>
-            </div>
-            <div class="stat-item">
-                <span class="label">H1 Trend</span>
-                <div class="stat-value" id="trend">---</div>
-            </div>
+        <div class="box">
+            <span class="label">VWAP Hladina</span>
+            <div class="value" id="vwap">----.--</div>
         </div>
-
-        <div id="signal-box" class="signal-banner wait">
-            Načítám analýzu...
+        <div class="box">
+            <span class="label">Doporučený Vstup</span>
+            <div class="value" id="entry">---</div>
         </div>
-
-        <div class="trade-levels">
-            <div class="level-row">
-                <span class="label">Doporučený vstup</span>
-                <span class="stat-value" id="entry">--</span>
-            </div>
-            <div class="level-row">
-                <span class="label" style="color: var(--red)">Stop Loss (4.5b)</span>
-                <span class="stat-value" id="sl" style="color: var(--red)">--</span>
-            </div>
-            <div class="level-row">
-                <span class="label" style="color: var(--green)">Take Profit (2b)</span>
-                <span class="stat-value" id="tp" style="color: var(--green)">--</span>
-            </div>
+        <div class="box">
+            <span class="label">Pár</span>
+            <div class="value">Gold Spot</div>
         </div>
     </div>
 
-    <footer>
-        Strategie: Vstup pod/nad H1 svíci dle VWAP [cite: 6, 49]<br>
-        Aktualizováno každých 15 minut (GitHub Actions)
-    </footer>
+    <div id="signal" class="status-banner">ANALÝZA TRHU...</div>
+
+    <div class="levels">
+        <div style="text-align: center;">
+            <span class="label" style="color: var(--red);">Stop-Loss (4.5b)</span>
+            <div class="value" id="sl">---</div>
+        </div>
+        <div style="text-align: center;">
+            <span class="label" style="color: var(--green);">Take-Profit (2b)</span>
+            <div class="value" id="tp">---</div>
+        </div>
+    </div>
+
+    <div class="footer">
+        Strategie: H1 svíce + VWAP (07:00+) <br>
+        Aktualizace: Každých 15 minut (GitHub Actions)
+    </div>
 </div>
 
 <script>
-    async function fetchData() {
+    async function update() {
         try {
-            const url = 'https://raw.githubusercontent.com/miroslavuherek153/zlato-robot/main/data.json';
-            const response = await fetch(url + '?t=' + Date.now());
-            const data = await response.json();
-
-            document.getElementById('price').innerText = data.cena;
-            document.getElementById('vwap').innerText = data.vwap;
-            document.getElementById('trend').innerText = data.trend;
-            document.getElementById('entry').innerText = data.vstup;
-            document.getElementById('sl').innerText = data.sl;
-            document.getElementById('tp').innerText = data.tp;
-
-            const box = document.getElementById('signal-box');
-            box.innerText = data.akce;
-
-            if (data.akce.includes('SHORT')) {
-                box.className = 'signal-banner sell';
-            } else if (data.akce.includes('LONG')) {
-                box.className = 'signal-banner buy';
-            } else {
-                box.className = 'signal-banner wait';
-            }
-        } catch (e) {
-            console.error("Chyba při načítání dat:", e);
-        }
+            const res = await fetch('data.json?t=' + Date.now());
+            const d = await res.json();
+            
+            document.getElementById('price').innerText = d.cena;
+            document.getElementById('vwap').innerText = d.vwap;
+            document.getElementById('entry').innerText = d.vstup;
+            document.getElementById('sl').innerText = d.sl;
+            document.getElementById('tp').innerText = d.tp;
+            
+            const sig = document.getElementById('signal');
+            sig.innerText = d.akce;
+            sig.className = 'status-banner';
+            
+            if(d.akce.includes('LONG')) sig.classList.add('buy');
+            else if(d.akce.includes('SHORT')) sig.classList.add('sell');
+        } catch(e) { console.error("Chyba načítání dat."); }
     }
-
-    fetchData();
-    setInterval(fetchData, 60000);
+    update();
+    setInterval(update, 60000);
 </script>
 
 </body>
