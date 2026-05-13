@@ -1,221 +1,108 @@
 import os
+import json
+import pandas_ta as ta
 from datetime import datetime
+import yfinance as yf
 
+# Importy tvých stávajících modulů (předpokládám jejich existenci v src/)
 from config_loader import load_config
-from data_fetcher import fetch_multi_tf
-from indicators import rsi, atr
-from strategy import determine_direction
-from risk import calculate_position_size
-from notifier import send_discord
 from logger import log_info, log_error
-from sentiment import sentiment_score
-from prediction import trend_direction
-from exporter import save_json
+from notifier import send_discord
 
-# ============================
-# 🔧 Načtení konfigurace
-# ============================
+# =================================================================
+# 🔧 NASTAVENÍ A KONFIGURACE
+# =================================================================
 config = load_config()
-
+SYMBOL = "GC=F"  # Zlaté futures (nejpřesnější volně dostupná spotová cena)
 DISCORD_WEBHOOK = os.getenv("DISCORD_WEBHOOK")
 
-RISK_NA_OBCHOD = config["risk_na_obchod"]
-TIMEFRAME = config["timeframe"]
-PERIOD_DAYS = config["period_days"]
+class GoldRobotPro:
+    def __init__(self):
+        self.rrr = config.get("indikatory", {}).get("rrr", 2.0)
+        self.atr_mult = config.get("indikatory", {}).get("atr_multiplier", 3.0)
 
-RSI_PERIOD = config["indikatory"]["rsi_period"]
-ATR_PERIOD = config["indikatory"]["atr_period"]
-ATR_MULT = config["indikatory"]["atr_multiplier"]
-RRR = config["indikatory"]["rrr"]
+    def fetch_data(self):
+        """Stáhne potřebná data pro MTF analýzu."""
+        log_info(f"Stahuji data pro {SYMBOL}...")
+        ticker = yf.Ticker(SYMBOL)
+        # H4 data pro určení hlavního trendu
+        df_h4 = ticker.history(period="60d", interval="1h") # Yahoo limit: 1h je nejstabilnější pro H4 simulaci
+        # M5 data pro precizní vstup
+        df_m5 = ticker.history(period="5d", interval="5m")
+        return df_m5, df_h4
 
-SYMBOLY = config["symboly"]
+    def analyze(self, df_m5, df_h4):
+        """Mozek aplikace: Spojuje trendy a indikátory."""
+        # 1. TRENDOVÝ FILTR (H4) - EMA 200
+        ema200_h4 = ta.ema(df_h4['Close'], length=200)
+        current_price = df_m5['Close'].iloc[-1]
+        last_ema_h4 = ema200_h4.iloc[-1]
+        
+        main_trend = "LONG" if current_price > last_ema_h4 else "SHORT"
 
+        # 2. VSTUPNÍ INDIKÁTORY (M5)
+        rsi = ta.rsi(df_m5['Close'], length=14).iloc[-1]
+        atr = ta.atr(df_m5['High'], df_m5['Low'], df_m5['Close'], length=14).iloc[-1]
+        vwap = ta.vwap(df_m5['High'], df_m5['Low'], df_m5['Close'], df_m5['Volume']).iloc[-1]
 
-# ============================
-# 🔍 Analýza jednoho symbolu
-# ============================
-def analyzuj(symbol, nazev):
-    log_info(f"Zpracovávám {symbol}...")
+        # 3. ROZHODOVACÍ LOGIKA
+        signal = "WAIT"
+        sl = 0.0
+        tp = 0.0
 
-    # --- Stažení multi-timeframe dat ---
-    try:
-        data_all = fetch_multi_tf(symbol)
-    except Exception as e:
-        log_error(f"Chyba při stahování dat {symbol}: {e}")
-        return
+        # Podmínky pro LONG: Trend je UP + RSI je přeprodané (< 35) + Cena je u VWAP
+        if main_trend == "LONG" and rsi < 35:
+            signal = "LONG 🟢"
+            sl = current_price - (atr * self.atr_mult)
+            tp = current_price + (abs(current_price - sl) * self.rrr)
 
-    data_5m = data_all.get("5m")
-    if data_5m is None or data_5m.empty:
-        log_error(f"Prázdná 5m data pro {symbol}")
-        return
+        # Podmínky pro SHORT: Trend je DOWN + RSI je překoupené (> 65) + Cena je u VWAP
+        elif main_trend == "SHORT" and rsi > 65:
+            signal = "SHORT 🔴"
+            sl = current_price + (atr * self.atr_mult)
+            tp = current_price - (abs(sl - current_price) * self.rrr)
 
-    close_5m = data_5m["Close"]
-    current_price = float(close_5m.iloc[-1])
-
-    # --- Výpočty indikátorů pro 5m (hlavní TF) ---
-    vwap_5m = (((data_5m["High"] + data_5m["Low"] + data_5m["Close"]) / 3) * data_5m["Volume"]).sum() / data_5m["Volume"].sum()
-    rsi_5m = rsi(close_5m, RSI_PERIOD).iloc[-1]
-    atr_5m = atr(data_5m, ATR_PERIOD).iloc[-1]
-
-    # --- H1 high/low z 5m dat ---
-    h1 = data_5m.resample("1h").agg({"High": "max", "Low": "min"})
-    if len(h1) < 3:
-        log_error(f"Nedostatek H1 dat pro {symbol}")
-        return
-
-    h_high = float(h1["High"].iloc[-2])
-    h_low = float(h1["Low"].iloc[-2])
-
-    # --- Sentiment ---
-    sentiment = sentiment_score(symbol)
-    log_info(f"Sentiment {symbol}: {sentiment:.0f}")
-
-    if sentiment < 40:
-        log_info(f"Sentiment příliš negativní ({sentiment:.0f}), obchod přeskočen.")
-        return
-
-    # --- Predikce (5m) ---
-    pred_dir, pred_score = trend_direction(close_5m)
-    log_info(f"Predikce {symbol}: {pred_dir} ({pred_score})")
-
-    if pred_dir == "DOWN" and current_price > vwap_5m:
-        log_info("Predikce proti trendu → obchod přeskočen.")
-        return
-    if pred_dir == "UP" and current_price < vwap_5m:
-        log_info("Predikce proti trendu → obchod přeskočen.")
-        return
-
-    # --- Trend (5m) ---
-    is_long = determine_direction(current_price, vwap_5m)
-    smer = "LONG 🟢" if is_long else "SHORT 🔴"
-    barva = 0x2ecc71 if is_long else 0xe74c3c
-
-    # --- Obchodní plán (jen 5m) ---
-    buffer = atr_5m * ATR_MULT
-    vstup = h_high if is_long else h_low
-    sl = vstup - buffer if is_long else vstup + buffer
-    tp = vstup + (vstup - sl) * RRR
-
-    pocet = calculate_position_size(RISK_NA_OBCHOD, vstup, sl)
-
-    # --- TradingView odkaz ---
-    clean_symbol = symbol.replace("=F", "")
-    chart_url = f"https://www.tradingview.com/symbols/{clean_symbol}"
-
-    # --- Discord embed ---
-    emoji = "🚀" if pred_dir == "UP" else "📉" if pred_dir == "DOWN" else "⚪"
-    sentiment_emoji = "🟢" if sentiment > 60 else "🟡" if sentiment >= 40 else "🔴"
-
-    payload = {
-        "embeds": [{
-            "title": f"{emoji} {nazev} — {smer}",
-            "description": (
-                f"**Predikce:** {emoji} `{pred_dir}` (score {pred_score})\n"
-                f"**Sentiment:** {sentiment_emoji} `{sentiment:.0f}` / 100\n"
-                f"**VWAP (5m):** `{vwap_5m:.2f}`\n"
-                f"**RSI (5m):** `{rsi_5m:.0f}`\n"
-            ),
-            "color": barva,
-            "fields": [
-                {
-                    "name": "📊 Obchodní plán (5m)",
-                    "value": (
-                        f"**Vstup:** `{vstup:.2f}`\n"
-                        f"**Stop-Loss:** `{sl:.2f}`\n"
-                        f"**Take-Profit:** `{tp:.2f}`\n"
-                        f"**Objem:** `{pocet} ks`"
-                    )
-                },
-                {
-                    "name": "📈 Graf",
-                    "value": f"[Otevřít TradingView]({chart_url})"
-                }
-            ],
-            "timestamp": datetime.utcnow().isoformat()
-        }]
-    }
-
-    if DISCORD_WEBHOOK:
-        send_discord(DISCORD_WEBHOOK, payload)
-
-    # ============================
-    # 🧠 Multi-timeframe bloky
-    # ============================
-    tf_blocks = {}
-
-    def build_tf_block(tf_name, df):
-        if df is None or df.empty:
-            return None
-
-        close = df["Close"]
-        price = float(close.iloc[-1])
-        vwap = (((df["High"] + df["Low"] + df["Close"]) / 3) * df["Volume"]).sum() / df["Volume"].sum()
-        rsi_val = rsi(close, RSI_PERIOD).iloc[-1]
-        atr_val = atr(df, ATR_PERIOD).iloc[-1]
-
-        tf_pred_dir, tf_pred_score = trend_direction(close)
-        tf_is_long = determine_direction(price, vwap)
-        tf_smer = "LONG 🟢" if tf_is_long else "SHORT 🔴"
-
-        block = {
-            "price": price,
-            "vwap": float(vwap),
-            "rsi": float(rsi_val),
-            "atr": float(atr_val),
-            "prediction": tf_pred_dir,
-            "prediction_score": tf_pred_score,
-            "trend": tf_smer,
+        return {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "price": round(current_price, 2),
+            "trend": main_trend,
+            "signal": signal,
+            "rsi": round(rsi, 2),
+            "vstup": round(current_price, 2) if signal != "WAIT" else None,
+            "sl": round(sl, 2) if signal != "WAIT" else None,
+            "tp": round(tp, 2) if signal != "WAIT" else None
         }
 
-        if tf_name == "5m":
-            block["entry"] = vstup
-            block["stop_loss"] = sl
-            block["take_profit"] = tp
-            block["volume"] = pocet
+    def run(self):
+        """Hlavní smyčka robota."""
+        try:
+            df_m5, df_h4 = self.fetch_data()
+            if df_m5.empty or df_h4.empty:
+                log_error("Nepodařilo se získat data z Yahoo Finance.")
+                return
 
-        return block
+            vysledek = self.analyze(df_m5, df_h4)
+            
+            # Uložení do JSON pro tvůj dashboard (index.html)
+            with open("data.json", "w") as f:
+                json.dump(vysledek, f, indent=4)
+            
+            log_info(f"Analýza hotova: {vysledek['signal']} při ceně {vysledek['price']}")
 
-    tf_map = {
-        "5m": data_all.get("5m"),
-        "30m": data_all.get("30m"),
-        "1h": data_all.get("1h"),
-        "4h": data_all.get("4h"),
-        "1d": data_all.get("1d"),
-    }
+            # Odeslání na Discord, pokud je signál
+            if vysledek["signal"] != "WAIT" and DISCORD_WEBHOOK:
+                msg = {
+                    "content": f"🚀 **NOVÝ SIGNÁL: {vysledek['signal']}**\n"
+                               f"💰 Vstup: {vysledek['vstup']}\n"
+                               f"🛑 SL: {vysledek['sl']}\n"
+                               f"🎯 TP: {vysledek['tp']}\n"
+                               f"📈 Trend: {vysledek['trend']}"
+                }
+                send_discord(DISCORD_WEBHOOK, msg)
 
-    for tf_name, df in tf_map.items():
-        block = build_tf_block(tf_name, df)
-        if block is not None:
-            tf_blocks[tf_name] = block
+        except Exception as e:
+            log_error(f"Kritická chyba v robotovi: {e}")
 
-    # --- JSON export ---
-    json_data = {
-        "symbol": symbol,
-        "nazev": nazev,
-        "price": current_price,
-        "vwap": float(vwap_5m),
-        "rsi": float(rsi_5m),
-        "atr": float(atr_5m),
-        "sentiment": float(sentiment),
-        "prediction": pred_dir,
-        "prediction_score": pred_score,
-        "trend": smer,
-        "entry": vstup,
-        "stop_loss": sl,
-        "take_profit": tp,
-        "volume": pocet,
-        "timestamp": datetime.utcnow().isoformat(),
-        "timeframes": tf_blocks
-    }
-
-    save_json(symbol, json_data)
-
-    log_info(f"Hotovo: {symbol}")
-
-
-# ============================
-# ▶️ Hlavní běh
-# ============================
 if __name__ == "__main__":
-    for sym, jmeno in SYMBOLY.items():
-        analyzuj(sym, jmeno)
+    robot = GoldRobotPro()
+    robot.run()
