@@ -1,9 +1,8 @@
 {
-    "cena": 4695.9,
-    "trend_h1": "UP",
-    "rsi": 37.79,
-    "akce": "WAIT",
-    "vstup": null,
-    "sl": null,
-    "tp": null
+    "cena": 4695.0,
+    "trend": "UP",
+    "rsi": 36.78,
+    "akce": "ČEKAT (ŽÁDNÝ VSTUP)",
+    "sl": "-",
+    "tp": "-"
 }
