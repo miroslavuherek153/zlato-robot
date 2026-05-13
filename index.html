@@ -1,39 +1,192 @@
-<div class="terminal">
-    <h1>XAUUSD H1 STRATEGY</h1>
-    <div class="grid">
-        <div class="box"><span class="label">Aktuální Cena</span><div class="value" id="price">...</div></div>
-        <div class="box"><span class="label">VWAP Hladina</span><div class="value" id="vwap">...</div></div>
-        <div class="box"><span class="label">Doporučený Vstup</span><div class="value" id="vstup">...</div></div>
-        <div class="box"><span class="label">Trh</span><div class="value">XAUUSD (Gold)</div></div>
-    </div>
-    
-    <div id="signal" class="main-signal">NAČÍTÁM STRATEGII...</div>
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XAUUSD | H1 Pro Terminal</title>
+    <style>
+        :root {
+            --bg: #111827;
+            --card: #1f2937;
+            --gold: #f59e0b;
+            --green: #10b981;
+            --red: #ef4444;
+            --text-main: #f3f4f6;
+            --text-dim: #9ca3af;
+            --border: #374151;
+        }
 
-    <div class="grid">
-        <div class="box" style="border-bottom: 4px solid #ef4444;"><span class="label">Stop-Loss (4.5b)</span><div class="value" id="sl">...</div></div>
-        <div class="box" style="border-bottom: 4px solid #22c55e;"><span class="label">Take-Profit (2b)</span><div class="value" id="tp">...</div></div>
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .terminal {
+            background: var(--card);
+            width: 100%;
+            max-width: 500px;
+            padding: 32px;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
+        }
+
+        h1 {
+            color: var(--gold);
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            padding: 16px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .label {
+            color: var(--text-dim);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .value {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .main-action {
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            margin-bottom: 24px;
+            background: #2d3748;
+            transition: all 0.3s ease;
+        }
+
+        .action-wait { color: var(--text-dim); border: 2px solid var(--border); }
+        .action-long { color: white; background: var(--green); box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+        .action-short { color: white; background: var(--red); box-shadow: 0 0 20px rgba(239, 68, 68, 0.4); }
+
+        .levels {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            border-top: 1px solid var(--border);
+            padding-top: 24px;
+        }
+
+        .level-box { text-align: center; }
+        .price-val { font-family: monospace; font-size: 1.2rem; display: block; margin-top: 4px; }
+
+        .footer {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            margin-top: 30px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+<div class="terminal">
+    <h1>XAUUSD H1 Strategy</h1>
+    
+    <div class="stats-grid">
+        <div class="stat-box">
+            <span class="label">Aktuální Cena</span>
+            <div class="value" id="price">----.--</div>
+        </div>
+        <div class="stat-box">
+            <span class="label">VWAP Hladina</span>
+            <div class="value" id="vwap">----.--</div>
+        </div>
+        <div class="stat-box">
+            <span class="label">Doporučený Vstup</span>
+            <div class="value" id="vstup">---</div>
+        </div>
+        <div class="stat-box">
+            <span class="label">Trh</span>
+            <div class="value">Gold Spot</div>
+        </div>
     </div>
-    <div class="footer">Strategie: Vstup pod/nad H1 svíci dle VWAP (07:00+). [cite: 1, 6]</div>
+
+    <div id="action-banner" class="main-action action-wait">
+        NAČÍTÁM DATA...
+    </div>
+
+    <div class="levels">
+        <div class="level-box">
+            <span class="label" style="color: var(--red)">Stop-Loss (4.5b)</span>
+            <span class="price-val" id="sl">---</span>
+        </div>
+        <div class="level-box">
+            <span class="label" style="color: var(--green)">Take-Profit (2b)</span>
+            <span class="price-val" id="tp">---</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        Strategie: Vstup pod/nad H1 svíci dle VWAP (07:00+) <br>
+        Aktualizace: Každých 15 minut pomocí GitHub Actions
+    </div>
 </div>
 
 <script>
-    async function update() {
-        const res = await fetch('data.json?t=' + Date.now());
-        const d = await res.json();
-        
-        document.getElementById('price').innerText = d.cena;
-        document.getElementById('vwap').innerText = d.vwap;
-        document.getElementById('vstup').innerText = d.vstup;
-        document.getElementById('sl').innerText = d.sl;
-        document.getElementById('tp').innerText = d.tp;
-        
-        const sig = document.getElementById('signal');
-        sig.innerText = d.akce;
-        
-        if(d.akce.includes('SHORT')) { sig.style.background = '#ef4444'; }
-        else if(d.akce.includes('LONG')) { sig.style.background = '#22c55e'; }
-        else { sig.style.background = '#3c4858'; }
+    async function updateDashboard() {
+        try {
+            // Cesta k tvému JSON souboru
+            const response = await fetch('data.json?t=' + Date.now());
+            const data = await response.json();
+
+            document.getElementById('price').innerText = data.cena;
+            document.getElementById('vwap').innerText = data.vwap;
+            document.getElementById('vstup').innerText = data.vstup;
+            document.getElementById('sl').innerText = data.sl;
+            document.getElementById('tp').innerText = data.tp;
+
+            const banner = document.getElementById('action-banner');
+            banner.innerText = data.akce;
+
+            // Logika barev podle akce
+            banner.className = 'main-action';
+            if (data.akce.includes('LONG')) {
+                banner.classList.add('action-long');
+            } else if (data.akce.includes('SHORT')) {
+                banner.classList.add('action-short');
+            } else {
+                banner.classList.add('action-wait');
+            }
+        } catch (e) {
+            console.error("Chyba při aktualizaci:", e);
+        }
     }
-    update();
-    setInterval(update, 60000);
+
+    updateDashboard();
+    setInterval(updateDashboard, 60000); // Kontrola každou minutu
 </script>
+
+</body>
+</html>
