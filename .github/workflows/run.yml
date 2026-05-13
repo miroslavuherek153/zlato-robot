@@ -1,15 +1,15 @@
-name: Gold Robot Run
+name: Gold Robot Analysis
 
 on:
   schedule:
-    - cron: '*/15 * * * *' # Běží každých 15 minut
-  workflow_dispatch:
+    - cron: '*/15 * * * *'  # Běží každých 15 minut
+  workflow_dispatch:        # Umožňuje spustit ručně tlačítkem
 
 jobs:
-  build:
+  run-analysis:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Set up Python 3.10
@@ -17,12 +17,18 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
+      - name: Install libraries
         run: |
           python -m pip install --upgrade pip
-          pip install pandas pandas_ta yfinance
+          pip install pandas pandas-ta yfinance
 
-      - name: Run analysis
+      - name: Execute robot
         run: python robot.py
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add data.json
+          git commit -m "Update technical analysis data" || exit 0
+          git push
