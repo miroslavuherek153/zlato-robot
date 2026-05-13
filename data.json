@@ -1,8 +1,8 @@
 {
-    "cena": 4695.0,
-    "trend": "UP",
-    "rsi": 36.78,
-    "akce": "ČEKAT (ŽÁDNÝ VSTUP)",
+    "cena": 4696.3,
+    "vwap": 4697.96,
+    "akce": "MIMO OBCHODNÍ ČAS (07-12h)",
+    "vstup": "-",
     "sl": "-",
     "tp": "-"
 }
