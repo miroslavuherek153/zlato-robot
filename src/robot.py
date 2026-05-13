@@ -1,55 +1,65 @@
 import pandas as pd
 import yfinance as yf
+import datetime
 
-def calculate_rsi(series, period=14):
-    delta = series.diff()
-    gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
-    loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-    rs = gain / loss
-    return 100 - (100 / (1 + rs))
+def calculate_vwap(df):
+    """Výpočet Volume Weighted Average Price (VWAP)."""
+    v = df['Volume'].values
+    tp = (df['Low'] + df['High'] + df['Close']).values / 3
+    return df.assign(VWAP=(tp * v).cumsum() / v.cumsum())
 
 def analyze_xauusd():
-    # Načtení dat (GC=F je Gold Futures, nejblíže spotu)
+    # Sťahujeme dáta pre zlato (XAUUSD)
     gold = yf.Ticker("GC=F")
-    df_h1 = gold.history(period="1mo", interval="1h")
-    df_m15 = gold.history(period="5d", interval="15m")
-
-    if df_h1.empty or df_m15.empty:
-        return {"akce": "CHYBA DATA"}
-
-    # --- H1 TREND (EMA 200) ---
-    ema200_h1 = df_h1['Close'].ewm(span=200, adjust=False).mean().iloc[-1]
-    current_price = df_m15['Close'].iloc[-1]
-    trend_h1 = "UP" if current_price > ema200_h1 else "DOWN"
-
-    # --- M15 SIGNÁL (RSI + ATR) ---
-    rsi_m15 = calculate_rsi(df_m15['Close']).iloc[-1]
+    # Potrebujeme aspoň 2 dni dát pre korektný VWAP a predchádzajúcu H1 sviečku
+    df = gold.history(period="2d", interval="1h")
     
-    # ATR pro dynamický SL/TP
-    high_low = df_m15['High'] - df_m15['Low']
-    atr = high_low.rolling(window=14).mean().iloc[-1]
+    if len(df) < 2:
+        return {"akce": "MÁLO DÁT", "duvod": "Čakám na uzavretie H1 sviečky"}
 
-    # Inicializace výstupu pro dashboard
+    df = calculate_vwap(df)
+    
+    # Údaje z poslednej UZAVRETEJ H1 sviečky
+    last_candle = df.iloc[-2]  
+    current_price = df.iloc[-1]['Close']
+    vwap_val = df.iloc[-1]['VWAP']
+    
+    # Parametre stratégie z dokumentu 
+    spread = 0.30 # ~30 bodov [cite: 8]
+    sl_points = 4.5 # Stop Loss 4.5 bodu [cite: 9]
+    tp_points = 2.0 # Take Profit 2 body [cite: 9]
+
     res = {
-        "cena": round(current_price, 1),
-        "trend": trend_h1,
-        "rsi": round(rsi_m15, 2),
-        "akce": "ČEKAT (ŽÁDNÝ VSTUP)",
+        "cena": round(current_price, 2),
+        "vwap": round(vwap_val, 2),
+        "akce": "ČEKAT (ŽÁDNÝ SETUP)",
+        "vstup": "-",
         "sl": "-",
         "tp": "-"
     }
 
-    # --- STRATEGIE ---
-    # LONG: Trend H1 je UP a RSI M15 je pod 35 (přeprodáno)
-    if trend_h1 == "UP" and rsi_m15 < 35:
-        res["akce"] = "VSTOUPIT DO LONG 🟢"
-        res["sl"] = round(current_price - (atr * 3), 1)
-        res["tp"] = round(current_price + (atr * 6), 1)
+    # Kontrola času (stratégia od 07:00 dopoludnia) 
+    current_hour = datetime.datetime.now().hour
+    if not (7 <= current_hour <= 12):
+        res["akce"] = "MIMO OBCHODNÍ ČAS (07-12h)"
+        return res
 
-    # SHORT: Trend H1 je DOWN a RSI M15 je nad 65 (překoupeno)
-    elif trend_h1 == "DOWN" and rsi_m15 > 65:
-        res["akce"] = "VSTOUPIT DO SHORT 🔴"
-        res["sl"] = round(current_price + (atr * 3), 2)
-        res["tp"] = round(current_price - (atr * 6), 2)
+    # 1. SHORT SETUP (Cena pod VWAP) 
+    if current_price < vwap_val:
+        res["trend"] = "SHORT (Pod VWAP)"
+        entry_price = last_candle['Low'] - spread [cite: 8]
+        res["akce"] = "SHORT SETUP (Pod Low H1) 🔴"
+        res["vstup"] = round(entry_price, 2)
+        res["sl"] = round(entry_price + sl_points, 2) [cite: 9]
+        res["tp"] = round(entry_price - tp_points, 2) [cite: 9]
+
+    # 2. LONG SETUP (Cena nad VWAP) [cite: 52]
+    elif current_price > vwap_val:
+        res["trend"] = "LONG (Nad VWAP)"
+        entry_price = last_candle['High'] + spread [cite: 52]
+        res["akce"] = "LONG SETUP (Nad High H1) 🟢"
+        res["vstup"] = round(entry_price, 2)
+        res["sl"] = round(entry_price - sl_points, 2)
+        res["tp"] = round(entry_price + tp_points, 2)
 
     return res
