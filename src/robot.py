@@ -3,28 +3,23 @@ import pandas_ta as ta
 import yfinance as yf
 
 def analyzuj_xauusd():
-    """
-    Profesionální MTF analýza zlata.
-    H1 = Trendový filtr (EMA 200)
-    M15 = Vstupní signál (RSI + ATR)
-    """
-    # 1. Stažení dat (Spotová cena zlata)
+    # 1. Stažení dat pro zlato (Spot/Futures)
     gold = yf.Ticker("GC=F")
     df_h1 = gold.history(period="1mo", interval="1h")
     df_m15 = gold.history(period="5d", interval="15m")
 
     if df_h1.empty or df_m15.empty:
-        return {"akce": "CHYBA DATA", "duvod": "Nepodařilo se stáhnout data"}
+        return {"akce": "CHYBA", "duvod": "Data nedostupná"}
 
-    # 2. Analýza trendu na H1 (EMA 200)
+    # 2. TREND (H1) - Používáme EMA 200 jako kompas
     df_h1['EMA200'] = ta.ema(df_h1['Close'], length=200)
-    posledni_h1_close = df_h1['Close'].iloc[-1]
-    posledni_ema = df_h1['EMA200'].iloc[-1]
+    posledni_cena_h1 = df_h1['Close'].iloc[-1]
+    ema_h1 = df_h1['EMA200'].iloc[-1]
     
-    # Určení trendu: Cena nad EMA200 = Hledáme jen nákupy (Long)
-    trend = "BULLISH (LONG)" if posledni_h1_close > posledni_ema else "BEARISH (SHORT)"
+    # Pokud je cena nad EMA, jdeme jen LONG. Pod EMA jen SHORT.
+    hlavni_trend = "LONG" if posledni_cena_h1 > ema_h1 else "SHORT"
 
-    # 3. Analýza vstupu na M15 (RSI a ATR)
+    # 3. SIGNÁL (M15) - RSI a Volatilita (ATR)
     df_m15['RSI'] = ta.rsi(df_m15['Close'], length=14)
     df_m15['ATR'] = ta.atr(df_m15['High'], df_m15['Low'], df_m15['Close'], length=14)
     
@@ -33,25 +28,27 @@ def analyzuj_xauusd():
     atr = df_m15['ATR'].iloc[-1]
 
     vystup = {
-        "akce": "ČEKAT (Žádný signál)",
-        "trend": trend,
+        "akce": "ČEKAT",
+        "trend": hlavni_trend,
         "cena": round(cena, 2),
-        "rsi": round(rsi, 1),
         "sl": 0,
-        "tp": 0
+        "tp": 0,
+        "duvod": "Trh je v rovnováze"
     }
 
-    # 4. LOGIKA SIGNÁLU
-    # LONG: Trend je nahoru + RSI je pod 35 (zlato je lokálně levné)
-    if trend == "BULLISH (LONG)" and rsi < 35:
+    # 4. LOGIKA VSTUPU
+    # Koupit: Trend je UP + Zlato je "levné" (RSI pod 30)
+    if hlavni_trend == "LONG" and rsi < 30:
         vystup["akce"] = "LONG (BUY) 🟢"
-        vystup["sl"] = round(cena - (atr * 3), 2)  # SL 3x volatilita pod cenu
-        vystup["tp"] = round(cena + (atr * 6), 2)  # TP s RRR 1:2
-    
-    # SHORT: Trend je dolů + RSI je nad 65 (zlato je lokálně drahé)
-    elif trend == "BEARISH (SHORT)" and rsi > 65:
+        vystup["sl"] = round(cena - (atr * 3.5), 2) # SL 3.5x volatilita
+        vystup["tp"] = round(cena + (atr * 7), 2)   # TP s RRR 1:2
+        vystup["duvod"] = "Odraz od přeprodané úrovně v rostoucím trendu"
+
+    # Prodat: Trend je DOWN + Zlato je "drahé" (RSI nad 70)
+    elif hlavni_trend == "SHORT" and rsi > 70:
         vystup["akce"] = "SHORT (SELL) 🔴"
-        vystup["sl"] = round(cena + (atr * 3), 2)
-        vystup["tp"] = round(cena - (atr * 6), 2)
+        vystup["sl"] = round(cena + (atr * 3.5), 2)
+        vystup["tp"] = round(cena - (atr * 7), 2)
+        vystup["duvod"] = "Odraz od překoupené úrovně v klesajícím trendu"
 
     return vystup
