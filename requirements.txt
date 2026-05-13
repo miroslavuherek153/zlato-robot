@@ -1,3 +1,6 @@
-pandas
-pandas_ta
-yfinance
+pandas>=1.5.0
+yfinance>=0.2.38
+numpy>=1.23.0
+# pandas_ta budeme instalovat přímo z GitHubu, pokud by zlobil, 
+# nebo použijeme tento zápis:
+pandas-ta
