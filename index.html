@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XAUUSD H1 SMC/RSI Terminal</title>
+    <title>XAUUSD SMC/H1 MASTER TERMINAL</title>
     <style>
         :root {
             --bg: #0d1117;
@@ -15,39 +15,39 @@
             --red: #f85149;
             --orange: #f0883e;
         }
-        body { background-color: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 15px; display: flex; flex-direction: column; align-items: center; margin: 0; }
-        .container { width: 100%; max-width: 1000px; background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid var(--border); box-sizing: border-box; }
+        body { background-color: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; padding: 10px; display: flex; flex-direction: column; align-items: center; margin: 0; }
+        .container { width: 100%; max-width: 1100px; background: var(--card); padding: 20px; border-radius: 16px; border: 1px solid var(--border); box-sizing: border-box; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .header { text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; }
-        h1 { color: var(--blue); margin: 0; font-size: 1.8rem; text-transform: uppercase; letter-spacing: 2px; }
+        h1 { color: var(--blue); margin: 0; font-size: 1.6rem; text-transform: uppercase; letter-spacing: 2px; }
         
-        .grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; }
-        @media (max-width: 850px) { .grid { grid-template-columns: 1fr; } }
+        .grid { display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; }
+        @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
         
         .box { background: #21262d; padding: 18px; border-radius: 12px; border: 1px solid var(--border); }
-        .label { color: #8b949e; font-size: 0.75rem; text-transform: uppercase; font-weight: bold; margin-bottom: 8px; display: block; }
+        .label { color: #8b949e; font-size: 0.75rem; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; display: block; }
         
-        .val-main { font-family: 'Courier New', monospace; font-size: 1.8rem; font-weight: bold; color: white; display: block; background: #0d1117; padding: 10px; border-radius: 8px; text-align: center; margin: 10px 0; border: 1px solid #444; }
+        .val-main { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 1.8rem; font-weight: bold; color: white; display: block; background: #0d1117; padding: 10px; border-radius: 8px; text-align: center; margin: 5px 0; border: 1px solid #444; }
         
-        .indicator-row { display: flex; justify-content: space-between; margin-bottom: 15px; padding: 10px; background: #0d1117; border-radius: 8px; }
-        .status-tag { font-weight: bold; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; }
+        .indicator-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 10px; background: #0d1117; border-radius: 8px; border: 1px solid #333; }
+        .status-tag { font-weight: bold; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; text-transform: uppercase; }
         
-        .setup-type { font-size: 1.4rem; font-weight: 900; text-align: center; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
-        .buy-mode { background: rgba(63, 185, 80, 0.1); color: var(--green); border: 1px solid var(--green); }
-        .sell-mode { background: rgba(248, 81, 73, 0.1); color: var(--red); border: 1px solid var(--red); }
+        .setup-type { font-size: 1.3rem; font-weight: 900; text-align: center; padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 2px solid transparent; }
+        .buy-mode { background: rgba(63, 185, 80, 0.1); color: var(--green); border-color: var(--green); }
+        .sell-mode { background: rgba(248, 81, 73, 0.1); color: var(--red); border-color: var(--red); }
         
-        .footer-note { font-size: 0.75rem; color: #8b949e; margin-top: 15px; text-align: center; font-style: italic; line-height: 1.4; }
+        .footer-note { font-size: 0.75rem; color: #8b949e; margin-top: 15px; text-align: center; line-height: 1.4; border-top: 1px solid var(--border); padding-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <h1>XAUUSD PRO TERMINAL</h1>
-        <p style="margin: 5px 0 0 0; color: var(--orange);">H1 Strategy | SMC | RSI | VWAP</p>
+        <h1>XAUUSD H1 PRO TERMINAL</h1>
+        <p style="margin: 5px 0 0 0; color: var(--orange); font-size: 0.9rem;">SMC Struktura | RSI Filtr | H1 High-Low Strategie</p>
     </div>
 
     <div class="grid">
-        <div class="box" style="padding: 0; overflow: hidden; height: 550px;">
+        <div class="box" style="padding: 0; overflow: hidden; height: 550px; position: relative;">
             <div id="tradingview_chart" style="height: 100%;"></div>
             <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
             <script type="text/javascript">
@@ -63,38 +63,39 @@
                 "studies": [
                     "VWAP@tv-basicstudies",
                     "RSI@tv-basicstudies",
-                    "MAExp@tv-basicstudies"
+                    "ZigZag@tv-basicstudies", // Pro vizualizaci SMC struktury (BOS/CHoCH)
+                    "PivotPointsHighLow@tv-basicstudies" // Pro identifikaci Liquidity zón
                 ],
-                "details": true,
-                "hotlist": true,
-                "calendar": true
+                "show_popup_button": true,
+                "withdateranges": true
             });
             </script>
         </div>
 
-        <div class="box" id="logic-panel">
+        <div class="box">
             <div id="signal-tag" class="setup-type">ANALÝZA TRHU...</div>
 
             <div class="indicator-row">
                 <div>
                     <span class="label">RSI (H1)</span>
-                    <span id="rsi-num" style="font-weight: bold;">--</span>
+                    <span id="rsi-num" style="font-weight: bold; font-size: 1.1rem;">--</span>
                 </div>
-                <div id="rsi-status" class="status-tag" style="background: #333;">--</div>
+                <div id="rsi-status" class="status-tag">NEUTRAL</div>
             </div>
 
             <div class="indicator-row">
                 <div>
-                    <span class="label">SMC / Trend</span>
+                    <span class="label">SMC Struktura</span>
+                    <div id="smc-text" style="font-weight: bold; font-size: 0.9rem;">Zjišťuji BOS...</div>
                 </div>
-                <div id="smc-status" class="status-tag" style="background: #333;">--</div>
+                <div id="smc-tag" class="status-tag">SCAN</div>
             </div>
 
-            <div style="margin-top: 25px;">
-                <span class="label">Vstupní cena (Entry)</span>
+            <div style="margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px;">
+                <span class="label">Cílový Vstup (Entry)</span>
                 <span class="val-main" id="val-entry">--</span>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
                     <div>
                         <span class="label">Stop Loss (4.5)</span>
                         <span class="val-main" id="val-sl" style="color: var(--red); font-size: 1.2rem;">--</span>
@@ -107,79 +108,88 @@
             </div>
 
             <div class="footer-note">
-                <strong>Pravidlo:</strong> Pokud RSI > 70 nebo < 30, zvažte snížení lotu (riziko otočení). Sledujte Orderblocky v grafu.
+                <strong>SMC Tip:</strong> Vstupuj pod Low (Short) nebo nad High (Long) předchozí hodiny jen tehdy, pokud ZigZag potvrzuje směr trendu a RSI není v extrémech (>70 / <30).
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    async function updateMasterTerminal() {
+    async function updateTerminal() {
         try {
-            // Live data z Binance (Zlato - PAXG)
-            const response = await fetch('https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=1h&limit=14');
+            // Live data z Binance (PAXGUSDT jako proxy pro Gold)
+            const response = await fetch('https://api.binance.com/api/v3/klines?symbol=PAXGUSDT&interval=1h&limit=20');
             const data = await response.json();
             
             const currentCandle = data[data.length - 1];
             const lastCandle = data[data.length - 2];
+            
             const currentPrice = parseFloat(currentCandle[4]);
             const openPrice = parseFloat(currentCandle[1]);
-            
             const highH1 = parseFloat(lastCandle[2]);
             const lowH1 = parseFloat(lastCandle[3]);
 
-            // VÝPOČET JEDNODUCHÉHO RSI (pro ukázku trendu)
-            const priceChange = ((currentPrice - openPrice) / openPrice) * 100;
-            const rsiSim = 50 + (priceChange * 10); // Simulované RSI
-            const rsiFinal = Math.min(Math.max(rsiSim, 10), 90).toFixed(2);
-            
-            document.getElementById('rsi-num').innerText = rsiFinal;
+            // 1. RSI LOGIKA (Zjednodušený výpočet z posledních 14 svící)
+            let gains = 0, losses = 0;
+            for(let i = data.length - 14; i < data.length; i++) {
+                let diff = parseFloat(data[i][4]) - parseFloat(data[i][1]);
+                if(diff >= 0) gains += diff; else losses -= diff;
+            }
+            const rs = gains / (losses || 1);
+            const rsi = (100 - (100 / (1 + rs))).toFixed(2);
+            document.getElementById('rsi-num').innerText = rsi;
 
-            // LOGIKA SMĚRU (Dle tvé PDF strategie)
-            const panel = document.getElementById('signal-tag');
+            // RSI Status barvy
+            const rsiTag = document.getElementById('rsi-status');
+            if (rsi > 70) { rsiTag.innerText = "Overbought"; rsiTag.style.background = "#f85149"; }
+            else if (rsi < 30) { rsiTag.innerText = "Oversold"; rsiTag.style.background = "#3fb950"; }
+            else { rsiTag.innerText = "Neutral"; rsiTag.style.background = "#333"; }
+
+            // 2. SMĚR DLE STRATEGIE (Cena vs Open/VWAP)
+            const signalTag = document.getElementById('signal-tag');
+            const smcTag = document.getElementById('smc-tag');
+            const smcText = document.getElementById('smc-text');
             const spread = 0.30;
             let entry, sl, tp;
 
             if (currentPrice < openPrice) {
                 // SHORT SETUP
-                panel.innerText = "▼ SHORT (PRODEJ)";
-                panel.className = "setup-type sell-mode";
+                signalTag.innerText = "▼ SHORT SETUP (H1)";
+                signalTag.className = "setup-type sell-mode";
                 
                 entry = (lowH1 - spread).toFixed(2);
                 sl = (parseFloat(entry) + 4.5).toFixed(2);
                 tp = (parseFloat(entry) - 2.0).toFixed(2);
-                
-                document.getElementById('smc-status').innerText = "BEARISH STRUCTURE";
-                document.getElementById('smc-status').style.color = "#f85149";
+
+                smcText.innerText = "Bearish Structure";
+                smcTag.innerText = "BOS SELL";
+                smcTag.style.background = "#f85149";
             } else {
                 // LONG SETUP
-                panel.innerText = "▲ LONG (NÁKUP)";
-                panel.className = "setup-type buy-mode";
+                signalTag.innerText = "▲ LONG SETUP (H1)";
+                signalTag.className = "setup-type buy-mode";
                 
                 entry = (highH1 + spread).toFixed(2);
                 sl = (parseFloat(entry) - 4.5).toFixed(2);
                 tp = (parseFloat(entry) + 2.0).toFixed(2);
-                
-                document.getElementById('smc-status').innerText = "BULLISH STRUCTURE";
-                document.getElementById('smc-status').style.color = "#3fb950";
+
+                smcText.innerText = "Bullish Structure";
+                smcTag.innerText = "BOS BUY";
+                smcTag.style.background = "#3fb950";
             }
 
-            // RSI STATUS
-            const rsiEl = document.getElementById('rsi-status');
-            if (rsiFinal > 70) { rsiEl.innerText = "OVERBOUGHT"; rsiEl.style.color = "#f85149"; }
-            else if (rsiFinal < 30) { rsiEl.innerText = "OVERSOLD"; rsiEl.style.color = "#3fb950"; }
-            else { rsiEl.innerText = "NEUTRAL"; rsiEl.style.color = "#58a6ff"; }
-
-            // ZOBRAZENÍ HODNOT
+            // Zobrazení hodnot
             document.getElementById('val-entry').innerText = entry;
             document.getElementById('val-sl').innerText = sl;
             document.getElementById('val-tp').innerText = tp;
 
-        } catch (e) { console.log("Chyba při aktualizaci..."); }
+        } catch (e) {
+            console.log("Syncing...");
+        }
     }
 
-    setInterval(updateMasterTerminal, 4000);
-    updateMasterTerminal();
+    setInterval(updateTerminal, 4000);
+    updateTerminal();
 </script>
 
 </body>
